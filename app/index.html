@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Grid-n-berg</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="app-shell">
+      <div id="map"></div>
+
+      <section
+        id="loading-modal"
+        class="loading-modal"
+        role="dialog"
+        aria-labelledby="loading-title"
+        aria-describedby="loading-message loading-note"
+        aria-modal="true"
+        aria-busy="true"
+      >
+        <div class="loading-modal__panel">
+          <div class="loading-modal__spinner" aria-hidden="true"></div>
+          <div class="loading-modal__copy">
+            <h2 id="loading-title">Loading street network</h2>
+            <p id="loading-message">Preparing map data</p>
+            <p id="loading-note" class="loading-modal__note">
+              First load saves the data locally.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Routing controls">
+        <div class="panel__body">
+          <div class="panel__topline">
+            <div>
+              <h1>Grid-n-berg</h1>
+              <p class="dictionary_quote_font">(grid on a mountain)</p>
+              <p class="eyebrow">
+                Real-time routing on a 3D pedestrians network. Drag the markers
+                ('O' for origin, 'D' for destination) to change the route and
+                observe the differences between the routing scenarios.
+              </p>
+            </div>
+          </div>
+
+          <div class="legend" aria-label="Slope color legend">
+            <label class="legend__toggle">
+              <span>Display slope</span>
+              <input id="slope-toggle" type="checkbox" />
+            </label>
+            <div class="legend__bar"></div>
+            <div class="legend__labels">
+              <span>Gentle</span>
+              <span>Steep</span>
+            </div>
+          </div>
+
+          <div class="scenario-list">
+            <article class="scenario scenario--distance">
+              <label class="scenario__topline">
+                <span class="scenario__name">
+                  <span class="scenario__dot scenario__dot--distance"></span>
+                  <span>2D shortest</span>
+                </span>
+                <input data-route-toggle="distance" type="checkbox" checked />
+              </label>
+              <div class="scenario__details">
+                <p id="distance-summary">Loading</p>
+                <strong id="distance-length">--</strong>
+              </div>
+            </article>
+            <article class="scenario scenario--accessible">
+              <label class="scenario__topline">
+                <span class="scenario__name">
+                  <span class="scenario__dot scenario__dot--accessible"></span>
+                  <span>Accessible</span>
+                </span>
+                <input data-route-toggle="accessible" type="checkbox" checked />
+              </label>
+              <div class="scenario__details">
+                <p id="accessible-summary">Loading</p>
+                <strong id="accessible-length">--</strong>
+              </div>
+            </article>
+            <article class="scenario scenario--comfort">
+              <label class="scenario__topline">
+                <span class="scenario__name">
+                  <span class="scenario__dot scenario__dot--comfort"></span>
+                  <span>Comfort</span>
+                </span>
+                <input data-route-toggle="comfort" type="checkbox" checked />
+              </label>
+              <div class="scenario__details">
+                <p id="comfort-summary">Loading</p>
+                <strong id="comfort-length">--</strong>
+              </div>
+            </article>
+          </div>
+
+          <p id="status" class="status">Loading network data</p>
+
+          <div class="panel__footer">
+            <button
+              id="info-button"
+              class="info-button"
+              type="button"
+              aria-haspopup="dialog"
+              aria-controls="info-modal"
+              title="About this dataset"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 11v5"></path>
+                <path d="M12 8h.01"></path>
+              </svg>
+              <span>Read more</span>
+            </button>
+            <button
+              id="fit-button"
+              class="fit-button"
+              type="button"
+              title="Zoom to route"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="6"></circle>
+                <path d="m16 16 4 4"></path>
+              </svg>
+              <span>Zoom to route</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="info-modal"
+        class="info-modal"
+        role="dialog"
+        aria-labelledby="info-title"
+        aria-modal="true"
+        hidden
+      >
+        <div class="info-modal__backdrop" data-info-close></div>
+        <article class="info-modal__panel" tabindex="-1">
+          <header class="info-modal__header">
+            <div>
+              <p class="info-modal__kicker">About the data</p>
+              <h2 id="info-title">Grid-n-berg</h2>
+            </div>
+            <button
+              class="info-modal__close"
+              type="button"
+              data-info-close
+              aria-label="Close information panel"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+          </header>
+
+          <div class="info-modal__content">
+            <p>
+              Grid-n-berg is a topography-aware pedestrian routing dataset for
+              New York City. It starts from an existing pedestrian network,
+              assigns local elevation to network vertices, and compares routes
+              using distance-only, comfort, and accessibility-sensitive cost
+              profiles.
+            </p>
+
+            <dl class="info-modal__facts">
+              <div>
+                <dt>Network</dt>
+                <dd>NYC pedestrian network geometry from Sevtsuk et al.</dd>
+              </div>
+              <div>
+                <dt>Elevation</dt>
+                <dd>NYC Planimetric Database elevation points.</dd>
+              </div>
+              <div>
+                <dt>Method</dt>
+                <dd>Average nearby elevation points within 50 meters.</dd>
+              </div>
+              <div>
+                <dt>Costs</dt>
+                <dd>Directional slope penalties stored on each segment.</dd>
+              </div>
+            </dl>
+
+            <section class="info-modal__section" aria-labelledby="slope-diagram-heading">
+              <h3 id="slope-diagram-heading">Slope evaluation</h3>
+              <figure class="info-diagram">
+                <svg
+                  viewBox="0 0 440 190"
+                  role="img"
+                  aria-labelledby="slope-diagram-title slope-diagram-desc"
+                >
+                  <title id="slope-diagram-title">How segment slope is measured</title>
+                  <desc id="slope-diagram-desc">
+                    A segment is evaluated from endpoint A to endpoint B using
+                    horizontal distance and elevation change.
+                  </desc>
+                  <defs>
+                    <marker
+                      id="arrow-head"
+                      viewBox="0 0 10 10"
+                      refX="7"
+                      refY="5"
+                      markerWidth="5"
+                      markerHeight="5"
+                      orient="auto-start-reverse"
+                    >
+                      <path d="M 0 0 L 10 5 L 0 10 z"></path>
+                    </marker>
+                  </defs>
+                  <path
+                    class="diagram-grid"
+                    d="M60 138 H378 M80 116 H356 M100 94 H334"
+                  ></path>
+                  <path
+                    class="diagram-slope"
+                    d="M72 138 C130 132 166 112 206 105 S294 78 350 60"
+                  ></path>
+                  <line class="diagram-measure" x1="72" y1="150" x2="350" y2="150"></line>
+                  <line class="diagram-measure" x1="350" y1="138" x2="350" y2="60"></line>
+                  <circle class="diagram-point" cx="72" cy="138" r="6"></circle>
+                  <circle class="diagram-point diagram-point--end" cx="350" cy="60" r="6"></circle>
+                  <text class="diagram-end-label" x="72" y="126" text-anchor="middle">A</text>
+                  <text class="diagram-end-label" x="350" y="46" text-anchor="middle">B</text>
+                  <text class="diagram-label" x="211" y="171" text-anchor="middle">horizontal length</text>
+                  <text class="diagram-label" x="294" y="100">elevation change</text>
+                  <rect class="diagram-chip" x="80" y="22" width="280" height="34" rx="6"></rect>
+                  <text class="diagram-chip-text" x="220" y="44" text-anchor="middle">grade = elevation change / length</text>
+                </svg>
+                <figcaption>
+                  Each segment stores endpoint elevation, average grade, and a
+                  filtered local maximum grade.
+                </figcaption>
+              </figure>
+            </section>
+
+            <section class="info-modal__section" aria-labelledby="scenario-diagram-heading">
+              <h3 id="scenario-diagram-heading">Routing scenarios</h3>
+              <figure class="info-diagram">
+                <svg
+                  viewBox="0 0 420 230"
+                  role="img"
+                  aria-labelledby="scenario-diagram-title scenario-diagram-desc"
+                >
+                  <title id="scenario-diagram-title">How route scenarios compare</title>
+                  <desc id="scenario-diagram-desc">
+                    Three routing scenarios use the same network but assign
+                    different costs to slope.
+                  </desc>
+                  <g class="diagram-row">
+                    <path class="diagram-route diagram-route--distance" d="M152 48 H356"></path>
+                    <text x="24" y="43">2D shortest</text>
+                    <text class="diagram-label" x="24" y="62">flat plane assumption</text>
+                    <text class="diagram-label" x="165" y="36">cost = distance</text>
+                  </g>
+                  <g class="diagram-row">
+                    <path
+                      class="diagram-route diagram-route--comfort"
+                      d="M152 112 C202 92 242 130 292 108 S334 86 356 98"
+                    ></path>
+                    <text x="24" y="106">Comfort</text>
+                    <text class="diagram-label" x="24" y="125">moderate slope penalty</text>
+                    <text class="diagram-label" x="165" y="142">can favor gentler walks</text>
+                  </g>
+                  <g class="diagram-row">
+                    <path
+                      class="diagram-route diagram-route--accessible"
+                      d="M152 178 C194 156 236 186 276 168 S338 126 356 146"
+                    ></path>
+                    <text x="24" y="172">Accessible</text>
+                    <text class="diagram-label" x="24" y="191">stronger slope penalty</text>
+                    <text class="diagram-label" x="165" y="207">useful for wheelchairs, strollers, stamina</text>
+                  </g>
+                  <circle class="diagram-node" cx="152" cy="48" r="4"></circle>
+                  <circle class="diagram-node" cx="356" cy="48" r="4"></circle>
+                  <circle class="diagram-node" cx="152" cy="112" r="4"></circle>
+                  <circle class="diagram-node" cx="356" cy="98" r="4"></circle>
+                  <circle class="diagram-node" cx="152" cy="178" r="4"></circle>
+                  <circle class="diagram-node" cx="356" cy="146" r="4"></circle>
+                </svg>
+                <figcaption>
+                  The same network can produce different paths because slope
+                  changes the cost of each segment and direction.
+                </figcaption>
+              </figure>
+            </section>
+
+            <p>
+              The accessible profile is a slope-aware scenario, not an ADA
+              compliance label. The dataset does not measure cross slope, curb
+              ramps, sidewalk width, surface condition, obstacles, legal access,
+              or temporary conditions.
+            </p>
+
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
