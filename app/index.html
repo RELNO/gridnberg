@@ -35,118 +35,140 @@
         </div>
       </section>
 
-      <section class="panel" aria-label="Routing controls">
+      <section id="routing-panel" class="panel" aria-label="Routing controls">
         <div class="panel__body">
           <div class="panel__topline">
-            <div>
+            <div class="panel__title">
               <h1>Grid-n-berg</h1>
               <p class="dictionary_quote_font">(grid on a mountain)</p>
-              <p class="eyebrow">
+              <p class="eyebrow panel__intro">
                 Real-time routing on a 3D pedestrians network. Drag the markers
                 ('O' for origin, 'D' for destination) to change the route and
                 observe the differences between the routing scenarios.
               </p>
             </div>
+            <button
+              id="panel-collapse-button"
+              class="panel__collapse-button"
+              type="button"
+              aria-controls="panel-content"
+              aria-expanded="true"
+              aria-label="Collapse routing panel"
+              title="Collapse panel"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m6 9 6 6 6-6"></path>
+              </svg>
+            </button>
           </div>
 
-          <div class="legend" aria-label="Slope color legend">
-            <label class="legend__toggle">
-              <span>Display slope</span>
-              <input id="slope-toggle" type="checkbox" />
-            </label>
-            <div class="legend__bar"></div>
-            <div class="legend__labels">
-              <span>Gentle</span>
-              <span>Steep</span>
+          <div id="panel-content" class="panel__collapsible">
+            <div class="legend" aria-label="Slope color legend">
+              <label class="legend__toggle">
+                <span>Display slope</span>
+                <input id="slope-toggle" type="checkbox" />
+              </label>
+              <div class="legend__bar"></div>
+              <div class="legend__labels">
+                <span>Gentle</span>
+                <span>Steep</span>
+              </div>
             </div>
-          </div>
 
-          <div class="scenario-list">
-            <article class="scenario scenario--distance">
-              <label class="scenario__topline">
-                <span class="scenario__name">
-                  <span class="scenario__dot scenario__dot--distance"></span>
-                  <span>2D shortest</span>
-                </span>
-                <input data-route-toggle="distance" type="checkbox" checked />
-              </label>
-              <div class="scenario__details">
-                <p id="distance-summary">Loading</p>
-                <strong id="distance-length">--</strong>
-              </div>
-            </article>
-            <article class="scenario scenario--accessible">
-              <label class="scenario__topline">
-                <span class="scenario__name">
-                  <span class="scenario__dot scenario__dot--accessible"></span>
-                  <span>Accessible</span>
-                </span>
-                <input data-route-toggle="accessible" type="checkbox" checked />
-              </label>
-              <div class="scenario__details">
-                <p id="accessible-summary">Loading</p>
-                <strong id="accessible-length">--</strong>
-              </div>
-            </article>
-            <article class="scenario scenario--comfort">
-              <label class="scenario__topline">
-                <span class="scenario__name">
-                  <span class="scenario__dot scenario__dot--comfort"></span>
-                  <span>Comfort</span>
-                </span>
-                <input data-route-toggle="comfort" type="checkbox" checked />
-              </label>
-              <div class="scenario__details">
-                <p id="comfort-summary">Loading</p>
-                <strong id="comfort-length">--</strong>
-              </div>
-            </article>
-          </div>
+            <div class="scenario-list">
+              <article class="scenario scenario--distance">
+                <label class="scenario__topline">
+                  <span class="scenario__name">
+                    <span class="scenario__dot scenario__dot--distance"></span>
+                    <span>2D shortest</span>
+                  </span>
+                  <input data-route-toggle="distance" type="checkbox" checked />
+                </label>
+                <div class="scenario__details">
+                  <p id="distance-summary">Loading</p>
+                  <strong id="distance-length">--</strong>
+                </div>
+              </article>
+              <article class="scenario scenario--accessible">
+                <label class="scenario__topline">
+                  <span class="scenario__name">
+                    <span class="scenario__dot scenario__dot--accessible"></span>
+                    <span>Accessible</span>
+                  </span>
+                  <input data-route-toggle="accessible" type="checkbox" checked />
+                </label>
+                <div class="scenario__details">
+                  <p id="accessible-summary">Loading</p>
+                  <strong id="accessible-length">--</strong>
+                </div>
+              </article>
+              <article class="scenario scenario--comfort">
+                <label class="scenario__topline">
+                  <span class="scenario__name">
+                    <span class="scenario__dot scenario__dot--comfort"></span>
+                    <span>Comfort</span>
+                  </span>
+                  <input data-route-toggle="comfort" type="checkbox" checked />
+                </label>
+                <div class="scenario__details">
+                  <p id="comfort-summary">Loading</p>
+                  <strong id="comfort-length">--</strong>
+                </div>
+              </article>
+            </div>
 
-          <p id="status" class="status">Loading network data</p>
+            <p id="status" class="status">Loading network data</p>
 
-          <div class="panel__footer">
-            <button
-              id="info-button"
-              class="info-button"
-              type="button"
-              aria-haspopup="dialog"
-              aria-controls="info-modal"
-              title="About this dataset"
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+            <div class="panel__footer">
+              <button
+                id="info-button"
+                class="info-button"
+                type="button"
+                aria-haspopup="dialog"
+                aria-controls="info-modal"
+                title="About this dataset"
               >
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M12 11v5"></path>
-                <path d="M12 8h.01"></path>
-              </svg>
-              <span>Read more</span>
-            </button>
-            <button
-              id="fit-button"
-              class="fit-button"
-              type="button"
-              title="Zoom to route"
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path d="M12 11v5"></path>
+                  <path d="M12 8h.01"></path>
+                </svg>
+                <span>Read more</span>
+              </button>
+              <button
+                id="fit-button"
+                class="fit-button"
+                type="button"
+                title="Zoom to route"
               >
-                <circle cx="11" cy="11" r="6"></circle>
-                <path d="m16 16 4 4"></path>
-              </svg>
-              <span>Zoom to route</span>
-            </button>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="6"></circle>
+                  <path d="m16 16 4 4"></path>
+                </svg>
+                <span>Zoom to route</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>

@@ -63,6 +63,8 @@ const state = {
     accessible: true,
     comfort: true,
   },
+  panelCollapsed: false,
+  panelCollapseWired: false,
   infoModalReturnFocus: null,
   infoModalWired: false,
 };
@@ -718,6 +720,7 @@ function addMarkers() {
 
 function wireControls() {
   document.getElementById("fit-button").addEventListener("click", fitRouteView);
+  wirePanelCollapse();
   wireInfoModal();
   wireSlopeHover();
 
@@ -734,6 +737,43 @@ function wireControls() {
       setRouteVisibility(key, event.target.checked);
     });
   });
+}
+
+function wirePanelCollapse() {
+  if (state.panelCollapseWired) return;
+
+  const panel = document.getElementById("routing-panel");
+  const button = document.getElementById("panel-collapse-button");
+  const content = document.getElementById("panel-content");
+  if (!panel || !button || !content) return;
+
+  button.addEventListener("click", () => {
+    setPanelCollapsed(!state.panelCollapsed);
+  });
+
+  setPanelCollapsed(state.panelCollapsed);
+  state.panelCollapseWired = true;
+}
+
+function setPanelCollapsed(collapsed) {
+  const panel = document.getElementById("routing-panel");
+  const button = document.getElementById("panel-collapse-button");
+  const content = document.getElementById("panel-content");
+  if (!panel || !button || !content) return;
+
+  state.panelCollapsed = collapsed;
+  panel.classList.toggle("is-collapsed", collapsed);
+  button.setAttribute("aria-expanded", String(!collapsed));
+  button.setAttribute(
+    "aria-label",
+    collapsed ? "Expand routing panel" : "Collapse routing panel",
+  );
+  button.title = collapsed ? "Expand panel" : "Collapse panel";
+  content.setAttribute("aria-hidden", String(collapsed));
+
+  if (collapsed) {
+    panel.scrollTop = 0;
+  }
 }
 
 function wireInfoModal() {
@@ -772,6 +812,9 @@ function openInfoModal(returnFocusElement) {
   state.infoModalReturnFocus = returnFocusElement || document.activeElement;
   modal.hidden = false;
   document.body.classList.add("has-info-modal");
+  modal.scrollTop = 0;
+  panel.scrollTop = 0;
+  modal.querySelector(".info-modal__content")?.scrollTo({ top: 0 });
   panel.focus({ preventScroll: true });
 }
 
@@ -1319,5 +1362,6 @@ class MinHeap {
 }
 
 syncScenarioColors();
+wirePanelCollapse();
 wireInfoModal();
 state.map = createMap();

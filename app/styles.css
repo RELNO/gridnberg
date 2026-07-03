@@ -163,17 +163,81 @@ body {
   box-shadow: var(--shadow);
   overflow: hidden;
   backdrop-filter: blur(12px);
+  transition: width 180ms ease, max-height 180ms ease;
 }
 
 .panel__body {
   padding: 18px 20px 16px;
+  transition: padding 180ms ease;
 }
 
 .panel__topline {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
+}
+
+.panel__title {
+  min-width: 0;
+}
+
+.panel__collapse-button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--panel-line);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.panel__collapse-button svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.2;
+  transition: transform 180ms ease;
+}
+
+.panel__collapse-button:hover {
+  border-color: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.panel__collapse-button:focus-visible {
+  outline: 2px solid rgba(43, 212, 255, 0.38);
+  outline-offset: 2px;
+}
+
+.panel__collapsible {
+  display: block;
+}
+
+.panel.is-collapsed {
+  width: min(270px, calc(100vw - 36px));
+  max-height: none;
+  overflow: visible;
+}
+
+.panel.is-collapsed .panel__body {
+  padding: 14px 14px 13px 16px;
+}
+
+.panel.is-collapsed .panel__topline {
+  align-items: center;
+}
+
+.panel.is-collapsed .panel__intro,
+.panel.is-collapsed .panel__collapsible {
+  display: none;
+}
+
+.panel.is-collapsed .panel__collapse-button svg {
+  transform: rotate(180deg);
 }
 
 .dictionary_quote_font {
@@ -418,12 +482,15 @@ h1 {
 }
 
 .info-modal {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 6;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
   padding: 18px;
+  overflow: hidden;
 }
 
 .info-modal[hidden] {
@@ -442,6 +509,7 @@ h1 {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   width: min(520px, calc(100vw - 36px));
+  height: min(760px, calc(100vh - 36px));
   max-height: min(760px, calc(100vh - 36px));
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -741,6 +809,21 @@ h1 {
   font-weight: 900;
 }
 
+@supports (height: 100dvh) {
+  .panel {
+    max-height: calc(100dvh - 36px);
+  }
+
+  .info-modal {
+    min-height: 100dvh;
+  }
+
+  .info-modal__panel {
+    height: min(760px, calc(100dvh - 36px));
+    max-height: min(760px, calc(100dvh - 36px));
+  }
+}
+
 @media (max-width: 720px) {
   .panel {
     top: auto;
@@ -752,8 +835,20 @@ h1 {
     overflow-y: auto;
   }
 
+  .panel.is-collapsed {
+    right: 10px;
+    left: auto;
+    width: min(280px, calc(100vw - 20px));
+    max-height: none;
+    overflow: visible;
+  }
+
   .panel__body {
     padding: 16px;
+  }
+
+  .panel.is-collapsed .panel__body {
+    padding: 13px 13px 12px 15px;
   }
 
   .panel__footer {
@@ -761,16 +856,29 @@ h1 {
   }
 
   .info-modal {
-    padding: 10px;
+    align-items: flex-start;
+    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    overflow-y: auto;
   }
 
   .info-modal__panel {
     width: calc(100vw - 20px);
-    max-height: calc(100vh - 20px);
+    height: calc(100vh - 20px);
+    max-height: none;
   }
 
   .info-modal__facts div {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  @supports (height: 100dvh) {
+    .panel {
+      max-height: calc(100dvh - 20px);
+    }
+
+    .info-modal__panel {
+      height: calc(100dvh - 20px);
+    }
   }
 }
