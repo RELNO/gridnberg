@@ -8,12 +8,11 @@
       rel="stylesheet"
       href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=2026-07-06-3d36" />
   </head>
   <body>
     <main id="app-shell">
       <div id="map"></div>
-
       <section
         id="loading-modal"
         class="loading-modal"
@@ -42,7 +41,7 @@
               <h1>Grid-n-berg</h1>
               <p class="dictionary_quote_font">(grid on a mountain)</p>
               <p class="eyebrow panel__intro">
-                Real-time routing on a 3D pedestrians network. Drag the markers
+                Real-time routing on a 3D pedestrian network. Drag the markers
                 ('O' for origin, 'D' for destination) to change the route and
                 observe the differences between the routing scenarios.
               </p>
@@ -71,15 +70,41 @@
 
           <div id="panel-content" class="panel__collapsible">
             <div class="legend" aria-label="Slope color legend">
-              <label class="legend__toggle">
-                <span>Display slope</span>
-                <input id="slope-toggle" type="checkbox" />
-              </label>
+              <div class="legend__heading">Slope network</div>
               <div class="legend__bar"></div>
               <div class="legend__labels">
                 <span>Gentle</span>
                 <span>Steep</span>
               </div>
+            </div>
+
+            <div class="mesh-control" aria-label="Network display controls">
+              <label class="mesh-control__slider">
+                <span>Height boost</span>
+                <output id="mesh-3d-boost-value" for="mesh-3d-boost">0x</output>
+                <input
+                  id="mesh-3d-boost"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="0"
+                />
+              </label>
+              <label class="mesh-control__slider">
+                <span>Network opacity</span>
+                <output id="network-intensity-value" for="network-intensity"
+                  >50%</output
+                >
+                <input
+                  id="network-intensity"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="50"
+                />
+              </label>
             </div>
 
             <div class="scenario-list">
@@ -99,10 +124,16 @@
               <article class="scenario scenario--accessible">
                 <label class="scenario__topline">
                   <span class="scenario__name">
-                    <span class="scenario__dot scenario__dot--accessible"></span>
+                    <span
+                      class="scenario__dot scenario__dot--accessible"
+                    ></span>
                     <span>Accessible</span>
                   </span>
-                  <input data-route-toggle="accessible" type="checkbox" checked />
+                  <input
+                    data-route-toggle="accessible"
+                    type="checkbox"
+                    checked
+                  />
                 </label>
                 <div class="scenario__details">
                   <p id="accessible-summary">Loading</p>
@@ -133,6 +164,7 @@
                 type="button"
                 aria-haspopup="dialog"
                 aria-controls="info-modal"
+                aria-label="About"
                 title="About this dataset"
               >
                 <svg
@@ -147,13 +179,29 @@
                   <path d="M12 11v5"></path>
                   <path d="M12 8h.01"></path>
                 </svg>
-                <span>Read more</span>
+                <span>About</span>
               </button>
+              <a
+                class="repo-link"
+                href="https://github.com/RELNO/gridnberg"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open Gridnberg on GitHub"
+                title="Open GitHub repository"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.16 1.18A10.95 10.95 0 0 1 12 6.05c.98 0 1.94.13 2.85.39 2.2-1.49 3.16-1.18 3.16-1.18.62 1.58.23 2.75.11 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.13v3.17c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"
+                  ></path>
+                </svg>
+                <span>GitHub</span>
+              </a>
               <button
                 id="fit-button"
                 class="fit-button"
                 type="button"
-                title="Zoom to route"
+                aria-label="Zoom in"
+                title="Zoom in"
               >
                 <svg
                   aria-hidden="true"
@@ -166,7 +214,7 @@
                   <circle cx="11" cy="11" r="6"></circle>
                   <path d="m16 16 4 4"></path>
                 </svg>
-                <span>Zoom to route</span>
+                <span>Zoom In</span>
               </button>
             </div>
           </div>
@@ -220,34 +268,91 @@
             <dl class="info-modal__facts">
               <div>
                 <dt>Network</dt>
-                <dd>NYC pedestrian network geometry from Sevtsuk et al.</dd>
+                <dd>
+                  <a
+                    href="https://www.nature.com/articles/s44284-025-00383-y"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    NYC pedestrian network from Sevtsuk et al.
+                  </a>
+                </dd>
               </div>
               <div>
                 <dt>Elevation</dt>
-                <dd>NYC Planimetric Database elevation points.</dd>
+                <dd>
+                  <a
+                    href="https://github.com/CityOfNewYork/nyc-planimetrics"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    NYC Planimetric Database ELEVATION layer
+                  </a>
+                </dd>
               </div>
               <div>
-                <dt>Method</dt>
-                <dd>Average nearby elevation points within 50 meters.</dd>
-              </div>
-              <div>
-                <dt>Costs</dt>
-                <dd>Directional slope penalties stored on each segment.</dd>
+                <dt>Reference</dt>
+                <dd>
+                  <a
+                    href="https://www.access-board.gov/ada/chapter/ch04/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    U.S. Access Board ADA Chapter 4
+                  </a>
+                </dd>
               </div>
             </dl>
 
-            <section class="info-modal__section" aria-labelledby="slope-diagram-heading">
+            <section
+              class="info-modal__section"
+              aria-labelledby="citation-heading"
+            >
+              <h3 id="citation-heading">Citation</h3>
+              <p class="info-modal__citation">
+                Noyman, A. (2026).
+                <cite>
+                  Gridnberg: A topography-aware pedestrian routing dataset for
+                  New York City
+                </cite>
+                [Data set and software].
+                <a
+                  href="https://arielnoyman.com/gridnberg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  arielnoyman.com/gridnberg
+                </a>
+              </p>
+              <p class="info-modal__citation">
+                Project by
+                <a
+                  href="https://arielnoyman.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  arielnoyman.com
+                </a>
+              </p>
+            </section>
+
+            <section
+              class="info-modal__section"
+              aria-labelledby="slope-diagram-heading"
+            >
               <h3 id="slope-diagram-heading">Slope evaluation</h3>
               <figure class="info-diagram">
                 <svg
-                  viewBox="0 0 440 190"
+                  viewBox="0 0 440 205"
                   role="img"
                   aria-labelledby="slope-diagram-title slope-diagram-desc"
                 >
-                  <title id="slope-diagram-title">How segment slope is measured</title>
+                  <title id="slope-diagram-title">
+                    How running slope is measured
+                  </title>
                   <desc id="slope-diagram-desc">
                     A segment is evaluated from endpoint A to endpoint B using
-                    horizontal distance and elevation change.
+                    horizontal length and endpoint elevation change.
                   </desc>
                   <defs>
                     <marker
@@ -264,77 +369,189 @@
                   </defs>
                   <path
                     class="diagram-grid"
-                    d="M60 138 H378 M80 116 H356 M100 94 H334"
+                    d="M54 150 H386 M74 128 H366 M94 106 H346 M114 84 H326"
+                  ></path>
+                  <path
+                    class="diagram-terrain-fill"
+                    d="M72 150 C128 146 170 121 212 113 S294 83 350 70 L350 150 Z"
                   ></path>
                   <path
                     class="diagram-slope"
-                    d="M72 138 C130 132 166 112 206 105 S294 78 350 60"
+                    d="M72 150 C128 146 170 121 212 113 S294 83 350 70"
                   ></path>
-                  <line class="diagram-measure" x1="72" y1="150" x2="350" y2="150"></line>
-                  <line class="diagram-measure" x1="350" y1="138" x2="350" y2="60"></line>
-                  <circle class="diagram-point" cx="72" cy="138" r="6"></circle>
-                  <circle class="diagram-point diagram-point--end" cx="350" cy="60" r="6"></circle>
-                  <text class="diagram-end-label" x="72" y="126" text-anchor="middle">A</text>
-                  <text class="diagram-end-label" x="350" y="46" text-anchor="middle">B</text>
-                  <text class="diagram-label" x="211" y="171" text-anchor="middle">horizontal length</text>
-                  <text class="diagram-label" x="294" y="100">elevation change</text>
-                  <rect class="diagram-chip" x="80" y="22" width="280" height="34" rx="6"></rect>
-                  <text class="diagram-chip-text" x="220" y="44" text-anchor="middle">grade = elevation change / length</text>
+                  <line
+                    class="diagram-measure"
+                    x1="72"
+                    y1="166"
+                    x2="350"
+                    y2="166"
+                  ></line>
+                  <line
+                    class="diagram-measure"
+                    x1="365"
+                    y1="150"
+                    x2="365"
+                    y2="70"
+                  ></line>
+                  <circle
+                    class="diagram-point"
+                    cx="72"
+                    cy="150"
+                    r="4.5"
+                  ></circle>
+                  <circle
+                    class="diagram-point diagram-point--end"
+                    cx="350"
+                    cy="70"
+                    r="4.5"
+                  ></circle>
+                  <text
+                    class="diagram-end-label"
+                    x="72"
+                    y="138"
+                    text-anchor="middle"
+                  >
+                    A
+                  </text>
+                  <text
+                    class="diagram-end-label"
+                    x="350"
+                    y="57"
+                    text-anchor="middle"
+                  >
+                    B
+                  </text>
+                  <text
+                    class="diagram-label"
+                    x="211"
+                    y="187"
+                    text-anchor="middle"
+                  >
+                    horizontal length
+                  </text>
+                  <text class="diagram-label" x="378" y="108">zB - zA</text>
+                  <rect
+                    class="diagram-chip"
+                    x="69"
+                    y="22"
+                    width="302"
+                    height="34"
+                    rx="5"
+                  ></rect>
+                  <text
+                    class="diagram-chip-text"
+                    x="220"
+                    y="44"
+                    text-anchor="middle"
+                  >
+                    average grade = (zB - zA) / length
+                  </text>
                 </svg>
                 <figcaption>
                   Each segment stores endpoint elevation, average grade, and a
-                  filtered local maximum grade.
+                  filtered maximum local running grade along the segment.
                 </figcaption>
               </figure>
             </section>
 
-            <section class="info-modal__section" aria-labelledby="scenario-diagram-heading">
+            <section
+              class="info-modal__section"
+              aria-labelledby="scenario-diagram-heading"
+            >
               <h3 id="scenario-diagram-heading">Routing scenarios</h3>
               <figure class="info-diagram">
                 <svg
-                  viewBox="0 0 420 230"
+                  viewBox="0 0 440 250"
                   role="img"
                   aria-labelledby="scenario-diagram-title scenario-diagram-desc"
                 >
-                  <title id="scenario-diagram-title">How route scenarios compare</title>
+                  <title id="scenario-diagram-title">
+                    How route scenarios compare
+                  </title>
                   <desc id="scenario-diagram-desc">
                     Three routing scenarios use the same network but assign
-                    different costs to slope.
+                    different directional costs to running slope.
                   </desc>
                   <g class="diagram-row">
-                    <path class="diagram-route diagram-route--distance" d="M152 48 H356"></path>
-                    <text x="24" y="43">2D shortest</text>
-                    <text class="diagram-label" x="24" y="62">flat plane assumption</text>
-                    <text class="diagram-label" x="165" y="36">cost = distance</text>
+                    <path
+                      class="diagram-route diagram-route--distance"
+                      d="M262 60 H420"
+                    ></path>
+                    <text x="24" y="38">2D shortest</text>
+                    <text class="diagram-label" x="24" y="58">
+                      minimizes horizontal length
+                    </text>
+                    <text class="diagram-label" x="24" y="75">
+                      ignores grade
+                    </text>
                   </g>
                   <g class="diagram-row">
                     <path
                       class="diagram-route diagram-route--comfort"
-                      d="M152 112 C202 92 242 130 292 108 S334 86 356 98"
+                      d="M262 128 C295 112 325 143 360 126 S402 104 420 114"
                     ></path>
                     <text x="24" y="106">Comfort</text>
-                    <text class="diagram-label" x="24" y="125">moderate slope penalty</text>
-                    <text class="diagram-label" x="165" y="142">can favor gentler walks</text>
+                    <text class="diagram-label" x="24" y="126">
+                      moderate running-grade penalty
+                    </text>
+                    <text class="diagram-label" x="24" y="143">
+                      may prefer lower-grade segments
+                    </text>
                   </g>
                   <g class="diagram-row">
                     <path
                       class="diagram-route diagram-route--accessible"
-                      d="M152 178 C194 156 236 186 276 168 S338 126 356 146"
+                      d="M262 202 C294 183 328 205 360 188 S403 153 420 166"
                     ></path>
-                    <text x="24" y="172">Accessible</text>
-                    <text class="diagram-label" x="24" y="191">stronger slope penalty</text>
-                    <text class="diagram-label" x="165" y="207">useful for wheelchairs, strollers, stamina</text>
+                    <text x="24" y="180">Accessible</text>
+                    <text class="diagram-label" x="24" y="200">
+                      strongest running-grade penalty
+                    </text>
+                    <text class="diagram-label" x="24" y="217">
+                      not an ADA compliance measure
+                    </text>
                   </g>
-                  <circle class="diagram-node" cx="152" cy="48" r="4"></circle>
-                  <circle class="diagram-node" cx="356" cy="48" r="4"></circle>
-                  <circle class="diagram-node" cx="152" cy="112" r="4"></circle>
-                  <circle class="diagram-node" cx="356" cy="98" r="4"></circle>
-                  <circle class="diagram-node" cx="152" cy="178" r="4"></circle>
-                  <circle class="diagram-node" cx="356" cy="146" r="4"></circle>
+                  <circle
+                    class="diagram-node"
+                    cx="262"
+                    cy="60"
+                    r="3.5"
+                  ></circle>
+                  <circle
+                    class="diagram-node"
+                    cx="420"
+                    cy="60"
+                    r="3.5"
+                  ></circle>
+                  <circle
+                    class="diagram-node"
+                    cx="262"
+                    cy="128"
+                    r="3.5"
+                  ></circle>
+                  <circle
+                    class="diagram-node"
+                    cx="420"
+                    cy="114"
+                    r="3.5"
+                  ></circle>
+                  <circle
+                    class="diagram-node"
+                    cx="262"
+                    cy="202"
+                    r="3.5"
+                  ></circle>
+                  <circle
+                    class="diagram-node"
+                    cx="420"
+                    cy="166"
+                    r="3.5"
+                  ></circle>
                 </svg>
                 <figcaption>
-                  The same network can produce different paths because slope
-                  changes the cost of each segment and direction.
+                  The same physical network can produce different shortest paths
+                  because each scenario scores each segment direction
+                  differently.
                 </figcaption>
               </figure>
             </section>
@@ -345,13 +562,15 @@
               ramps, sidewalk width, surface condition, obstacles, legal access,
               or temporary conditions.
             </p>
-
           </div>
         </article>
       </section>
     </main>
 
     <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
-    <script src="./app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@deck.gl/core@9.0.0/dist.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@deck.gl/layers@9.0.0/dist.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@deck.gl/mapbox@9.0.0/dist.min.js"></script>
+    <script src="./app.js?v=2026-07-06-3d36"></script>
   </body>
 </html>

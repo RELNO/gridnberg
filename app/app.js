@@ -4,7 +4,30 @@ const DATA_CACHE_NAME = "gridnberg-data-v1";
 const DATA_CACHE_VERSION = "2026-07-02";
 const DATA_CACHE_PREFIX = "gridnberg-data-";
 const LOADING_MODAL_HIDE_MS = 180;
+const MESH_3D_DEFAULT_BOOST = 0;
+const NETWORK_INTENSITY_DEFAULT = 50;
+const NETWORK_SOURCE_ID = "routing-network";
+const NETWORK_LINE_LAYERS = [
+  "routing-network-slope-glow",
+  "routing-network-slope-core",
+];
+const DECK_3D_LAYER_ID = "routing-network-3d";
+const DECK_3D_BEFORE_LAYER_ID = "route-distance-halo";
+const DECK_3D_LINE_WIDTH_PIXELS = 1.65;
+const MESH_3D_ALTITUDE_MULTIPLIER = 0.18;
+const MESH_3D_VIEW = {
+  pitch: 62,
+  bearing: -28,
+};
 
+const SLOPE_COLOR_STOPS = [
+  [0, "#3c2b7d"],
+  [2, "#8c34af"],
+  [5, "#d93096"],
+  [8.33, "#ff207f"],
+  [15, "#ff9b67"],
+  [25, "#fff8ee"],
+];
 
 const SCENARIOS = [
   {
@@ -47,6 +70,7 @@ const COST_INDEX = {
 const state = {
   map: null,
   data: null,
+  networkDisplayData: null,
   adjacency: null,
   bounds: null,
   originNode: null,
@@ -54,40 +78,31 @@ const state = {
   originMarker: null,
   destMarker: null,
   routeRequest: 0,
-  slopeColorVisible: false,
   slopeHoverIndex: null,
   slopePopup: null,
   activeSlopeSegmentId: null,
+  mesh3dBoost: MESH_3D_DEFAULT_BOOST,
+  networkIntensity: NETWORK_INTENSITY_DEFAULT,
+  deckOverlay: null,
+  deck3dData: null,
+  elevationStats: null,
+  slopeColorCache: new Map(),
   routeVisibility: {
     distance: true,
     accessible: true,
     comfort: true,
   },
   panelCollapsed: false,
-  panelCollapseWired: false,
   infoModalReturnFocus: null,
-  infoModalWired: false,
 };
 
 const SLOPE_HOVER_INDEX_CELL_SIZE = 0.002;
 const SLOPE_HOVER_PIXEL_TOLERANCE = 12;
 
-const NETWORK_COLOR_LAYERS = [
-  "routing-network-color-glow",
-  "routing-network-color-fine",
-];
-
 const ROUTE_SHADOW = {
-  normal: {
-    blur: 0,
-    opacity: 0.74,
-    widthPadding: [3, 5, 8],
-  },
-  slope: {
-    blur: 2,
-    opacity: 0.92,
-    widthPadding: [11, 15, 20],
-  },
+  blur: 2,
+  opacity: 0.92,
+  widthPadding: [11, 15, 20],
 };
 
 const DEFAULT_ROUTE = {
@@ -210,6 +225,7 @@ function createMap() {
     pitch: 0,
     bearing: 0,
     attributionControl: true,
+    canvasContextAttributes: { antialias: true },
   });
 
   map.addControl(
@@ -245,12 +261,13 @@ async function bootstrap() {
   const { routingData, networkDisplayData } = await loadAppData();
 
   state.data = routingData;
+  state.networkDisplayData = networkDisplayData;
   setStatus(
     `${state.data.segments.length.toLocaleString()} segments loaded; building graph`,
   );
 
   state.bounds = computeBounds(state.data.nodes);
-  addNetworkLayer(networkDisplayData);
+  addNetworkLayer(state.networkDisplayData);
   addRouteLayers();
   state.adjacency = buildAdjacency(state.data);
   addMarkers();
@@ -401,170 +418,80 @@ function fitRouteView() {
 }
 
 function addNetworkLayer(networkDisplayData) {
-  state.map.addSource("routing-network", {
+  state.map.addSource(NETWORK_SOURCE_ID, {
     type: "geojson",
     data: networkDisplayData,
   });
 
   state.map.addLayer({
-    id: "routing-network-base-glow",
+    id: "routing-network-slope-glow",
     type: "line",
-    source: "routing-network",
-    paint: {
-      "line-color": "#9a9a9a",
-      "line-width": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        9,
-        0.45,
-        12,
-        0.9,
-        15,
-        1.8,
-        18,
-        3.1,
-      ],
-      "line-opacity": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        9,
-        0.24,
-        12,
-        0.36,
-        15,
-        0.46,
-      ],
-    },
-  });
-
-  state.map.addLayer({
-    id: "routing-network-base",
-    type: "line",
-    source: "routing-network",
-    paint: {
-      "line-color": "#05051f",
-      "line-width": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        9,
-        0.2,
-        12,
-        0.48,
-        15,
-        1.05,
-        18,
-        2.1,
-      ],
-      "line-opacity": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        9,
-        0.38,
-        12,
-        0.54,
-        15,
-        0.72,
-      ],
-    },
-  });
-
-  state.map.addLayer({
-    id: "routing-network-color-glow",
-    type: "line",
-    source: "routing-network",
+    source: NETWORK_SOURCE_ID,
     layout: {
-      visibility: "none",
+      "line-cap": "round",
+      "line-join": "round",
     },
     paint: {
-      "line-color": [
-        "interpolate",
-        ["linear"],
-        ["get", "steep"],
-        0,
-        "#05051f",
-        2,
-        "#31135c",
-        5,
-        "#8e226e",
-        8.33,
-        "#ff1478",
-        15,
-        "#ff7b5c",
-        25,
-        "#fff5e8",
-      ],
+      "line-color": slopeColorExpression(),
       "line-width": [
         "interpolate",
         ["linear"],
         ["zoom"],
         9,
-        0.35,
+        0.7,
+        12,
+        1.6,
+        15,
+        3.4,
+        18,
+        6.8,
+      ],
+      "line-blur": 1.2,
+      "line-opacity": 0.52,
+    },
+  });
+
+  state.map.addLayer({
+    id: "routing-network-slope-core",
+    type: "line",
+    source: NETWORK_SOURCE_ID,
+    layout: {
+      "line-cap": "round",
+      "line-join": "round",
+    },
+    paint: {
+      "line-color": slopeColorExpression(),
+      "line-width": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        9,
+        0.28,
         12,
         0.75,
         15,
-        1.6,
+        1.75,
         18,
-        3.2,
+        3.4,
       ],
-      "line-opacity": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        9,
-        0.44,
-        12,
-        0.72,
-        15,
-        0.92,
-      ],
+      "line-opacity": 1,
     },
   });
 
-  state.map.addLayer({
-    id: "routing-network-color-fine",
-    type: "line",
-    source: "routing-network",
-    layout: {
-      visibility: "none",
-    },
-    paint: {
-      "line-color": [
-        "interpolate",
-        ["linear"],
-        ["get", "steep"],
-        0,
-        "#090a2c",
-        2,
-        "#54207d",
-        5,
-        "#b72a88",
-        8.33,
-        "#ff1983",
-        15,
-        "#ff9568",
-        25,
-        "#fff8ef",
-      ],
-      "line-width": [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        9,
-        0.18,
-        12,
-        0.45,
-        15,
-        1.0,
-        18,
-        2.2,
-      ],
-      "line-opacity": 0.96,
-    },
-  });
+  updateNetworkLayerStyle();
+}
+
+function slopeColorExpression() {
+  return [
+    "interpolate",
+    ["linear"],
+    ["get", "steep"],
+    ...SLOPE_COLOR_STOPS.flatMap(([value, color]) => [value, color]),
+  ];
+}
+
+function networkIntensityRatio() {
+  return Math.max(0, Math.min(1, state.networkIntensity / 100));
 }
 
 function addRouteLayers() {
@@ -585,8 +512,8 @@ function addRouteLayers() {
       paint: {
         "line-color": "#040405",
         "line-width": routeShadowWidthExpression(scenario),
-        "line-blur": ROUTE_SHADOW.normal.blur,
-        "line-opacity": ROUTE_SHADOW.normal.opacity,
+        "line-blur": ROUTE_SHADOW.blur,
+        "line-opacity": ROUTE_SHADOW.opacity,
       },
     });
 
@@ -617,39 +544,43 @@ function addRouteLayers() {
   }
 }
 
-function routeShadowWidthExpression(scenario, emphasized = false) {
-  const widthPadding = emphasized
-    ? ROUTE_SHADOW.slope.widthPadding
-    : ROUTE_SHADOW.normal.widthPadding;
-
+function routeShadowWidthExpression(scenario) {
   return [
     "interpolate",
     ["linear"],
     ["zoom"],
     9,
-    scenario.width + widthPadding[0],
+    scenario.width + ROUTE_SHADOW.widthPadding[0],
     14,
-    scenario.width + widthPadding[1],
+    scenario.width + ROUTE_SHADOW.widthPadding[1],
     18,
-    scenario.width + widthPadding[2],
+    scenario.width + ROUTE_SHADOW.widthPadding[2],
   ];
 }
 
-function syncRouteShadowStyle() {
-  const shadow = state.slopeColorVisible ? ROUTE_SHADOW.slope : ROUTE_SHADOW.normal;
+function getElevationStats(data) {
+  if (state.elevationStats) return state.elevationStats;
 
-  for (const scenario of SCENARIOS) {
-    const layerId = `${scenario.source}-halo`;
-    if (!state.map.getLayer(layerId)) continue;
-
-    state.map.setPaintProperty(
-      layerId,
-      "line-width",
-      routeShadowWidthExpression(scenario, state.slopeColorVisible),
-    );
-    state.map.setPaintProperty(layerId, "line-blur", shadow.blur);
-    state.map.setPaintProperty(layerId, "line-opacity", shadow.opacity);
+  let min = Infinity;
+  let max = -Infinity;
+  for (const node of data.nodes) {
+    const z = node[2];
+    if (!Number.isFinite(z)) continue;
+    min = Math.min(min, z);
+    max = Math.max(max, z);
   }
+
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    min = 0;
+    max = 1;
+  }
+
+  state.elevationStats = {
+    min,
+    max,
+    range: Math.max(1, max - min),
+  };
+  return state.elevationStats;
 }
 
 function emptyFeatureCollection() {
@@ -720,15 +651,8 @@ function addMarkers() {
 
 function wireControls() {
   document.getElementById("fit-button").addEventListener("click", fitRouteView);
-  wirePanelCollapse();
-  wireInfoModal();
   wireSlopeHover();
-
-  const slopeToggle = document.getElementById("slope-toggle");
-  slopeToggle.checked = state.slopeColorVisible;
-  slopeToggle.addEventListener("change", (event) => {
-    setSlopeColorVisibility(event.target.checked);
-  });
+  wireMesh3dControls();
 
   document.querySelectorAll("[data-route-toggle]").forEach((input) => {
     const key = input.dataset.routeToggle;
@@ -739,9 +663,50 @@ function wireControls() {
   });
 }
 
-function wirePanelCollapse() {
-  if (state.panelCollapseWired) return;
+function wireMesh3dControls() {
+  const slider = document.getElementById("mesh-3d-boost");
+  const intensitySlider = document.getElementById("network-intensity");
+  if (!slider || !intensitySlider) return;
 
+  state.mesh3dBoost = readMesh3dBoost(slider);
+  state.networkIntensity = readNetworkIntensity(intensitySlider);
+  syncMesh3dControls();
+  updateNetworkLayerStyle();
+
+  slider.addEventListener("input", (event) => {
+    setMesh3dBoost(readMesh3dBoost(event.target));
+  });
+
+  intensitySlider.addEventListener("input", (event) => {
+    setNetworkIntensity(readNetworkIntensity(event.target));
+  });
+}
+
+function readMesh3dBoost(input) {
+  const value = Number(input?.value);
+  return Number.isFinite(value) ? value : MESH_3D_DEFAULT_BOOST;
+}
+
+function readNetworkIntensity(input) {
+  const value = Number(input?.value);
+  return Number.isFinite(value) ? value : NETWORK_INTENSITY_DEFAULT;
+}
+
+function syncMesh3dControls() {
+  const slider = document.getElementById("mesh-3d-boost");
+  const output = document.getElementById("mesh-3d-boost-value");
+  const intensitySlider = document.getElementById("network-intensity");
+  const intensityOutput = document.getElementById("network-intensity-value");
+
+  if (slider) slider.value = String(state.mesh3dBoost);
+  if (output) output.textContent = `${Math.round(state.mesh3dBoost)}x`;
+  if (intensitySlider) intensitySlider.value = String(state.networkIntensity);
+  if (intensityOutput) {
+    intensityOutput.textContent = `${Math.round(state.networkIntensity)}%`;
+  }
+}
+
+function wirePanelCollapse() {
   const panel = document.getElementById("routing-panel");
   const button = document.getElementById("panel-collapse-button");
   const content = document.getElementById("panel-content");
@@ -752,7 +717,6 @@ function wirePanelCollapse() {
   });
 
   setPanelCollapsed(state.panelCollapsed);
-  state.panelCollapseWired = true;
 }
 
 function setPanelCollapsed(collapsed) {
@@ -777,8 +741,6 @@ function setPanelCollapsed(collapsed) {
 }
 
 function wireInfoModal() {
-  if (state.infoModalWired) return;
-
   const modal = document.getElementById("info-modal");
   const panel = modal?.querySelector(".info-modal__panel");
   const openButton = document.getElementById("info-button");
@@ -800,8 +762,6 @@ function wireInfoModal() {
       trapInfoModalFocus(event, modal);
     }
   });
-
-  state.infoModalWired = true;
 }
 
 function openInfoModal(returnFocusElement) {
@@ -854,17 +814,254 @@ function setLayerVisibility(layerId, visible) {
   state.map.setLayoutProperty(layerId, "visibility", visible ? "visible" : "none");
 }
 
-function setSlopeColorVisibility(visible) {
-  state.slopeColorVisible = visible;
-  for (const layerId of NETWORK_COLOR_LAYERS) {
+function setMesh3dBoost(value) {
+  const previousBoost = state.mesh3dBoost;
+  state.mesh3dBoost = Math.max(0, Math.min(1000, value));
+  syncMesh3dControls();
+  updateNetworkLayerStyle();
+
+  if (previousBoost <= 0 && state.mesh3dBoost > 0) {
+    state.map.easeTo({
+      pitch: MESH_3D_VIEW.pitch,
+      bearing: MESH_3D_VIEW.bearing,
+      duration: 850,
+    });
+  } else if (previousBoost > 0 && state.mesh3dBoost <= 0) {
+    hideSlopeHover();
+    state.map.easeTo({
+      pitch: 0,
+      bearing: 0,
+      duration: 650,
+    });
+  }
+
+  setStatus(
+    state.mesh3dBoost > 0
+      ? `Slope network height boost ${Math.round(state.mesh3dBoost)}x`
+      : "Flat slope network",
+  );
+}
+
+function setNetworkIntensity(value) {
+  state.networkIntensity = Math.max(0, Math.min(100, value));
+  syncMesh3dControls();
+  updateNetworkLayerStyle();
+}
+
+function updateNetworkLayerStyle() {
+  if (!state.map) return;
+
+  const use3d = state.mesh3dBoost > 0 && deck3dAvailable();
+  setNativeNetworkVisibility(!use3d);
+  updateNativeNetworkOpacity();
+  updateDeck3dOverlay(use3d);
+  syncRendererStateAttributes(use3d);
+
+  if (state.mesh3dBoost > 0 && !deck3dAvailable()) {
+    setStatus("3D network needs deck.gl to finish loading");
+  }
+}
+
+function syncRendererStateAttributes(use3d) {
+  const root = document.documentElement;
+  root.dataset.networkRenderer = use3d ? "deck-3d" : "maplibre-2d";
+  root.dataset.deckAvailable = String(deck3dAvailable());
+  root.dataset.deckOverlayActive = String(use3d);
+  root.dataset.deckPathCount = String(state.deck3dData?.length || 0);
+  root.dataset.heightBoost = String(state.mesh3dBoost);
+  root.dataset.networkOpacity = String(networkIntensityRatio());
+}
+
+function setNativeNetworkVisibility(visible) {
+  for (const layerId of NETWORK_LINE_LAYERS) {
     setLayerVisibility(layerId, visible);
   }
-  syncRouteShadowStyle();
-  if (visible) {
-    ensureSlopeHoverIndex();
-  } else {
-    hideSlopeHover();
+}
+
+function updateNativeNetworkOpacity() {
+  const ratio = networkIntensityRatio();
+  const opacities = {
+    "routing-network-slope-glow": ratio * 0.52,
+    "routing-network-slope-core": ratio,
+  };
+
+  for (const [layerId, opacity] of Object.entries(opacities)) {
+    if (state.map.getLayer(layerId)) {
+      state.map.setPaintProperty(layerId, "line-opacity", opacity);
+    }
   }
+}
+
+function deck3dAvailable() {
+  return Boolean(window.deck?.MapboxOverlay && window.deck?.PathLayer);
+}
+
+function updateDeck3dOverlay(visible) {
+  if (!state.deckOverlay && !visible) return;
+  if (!deck3dAvailable()) return;
+
+  const overlay = ensureDeck3dOverlay();
+  overlay.setProps({
+    layers: visible ? [createDeck3dLayer()] : [],
+  });
+}
+
+function ensureDeck3dOverlay() {
+  if (state.deckOverlay) return state.deckOverlay;
+
+  state.deckOverlay = new deck.MapboxOverlay({
+    interleaved: true,
+    layers: [],
+  });
+  state.map.addControl(state.deckOverlay);
+  return state.deckOverlay;
+}
+
+function createDeck3dLayer() {
+  const alpha = Math.round(networkIntensityRatio() * 255);
+
+  return new deck.PathLayer({
+    id: DECK_3D_LAYER_ID,
+    data: getDeck3dData(),
+    beforeId: DECK_3D_BEFORE_LAYER_ID,
+    getPath: (segment) => segment.path,
+    getColor: (segment) => [...segment.color, alpha],
+    getWidth: DECK_3D_LINE_WIDTH_PIXELS,
+    widthUnits: "pixels",
+    widthMinPixels: 0.7,
+    widthMaxPixels: 3.2,
+    capRounded: true,
+    jointRounded: true,
+    billboard: true,
+    opacity: 1,
+    pickable: false,
+    _pathType: "open",
+    modelMatrix: deck3dModelMatrix(),
+    parameters: {
+      depthTest: true,
+      depthMask: true,
+    },
+    updateTriggers: {
+      getColor: [alpha],
+    },
+  });
+}
+
+function deck3dModelMatrix() {
+  const zScale = state.mesh3dBoost * MESH_3D_ALTITUDE_MULTIPLIER;
+  return [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, zScale, 0,
+    0, 0, 0, 1,
+  ];
+}
+
+function getDeck3dData() {
+  if (!state.deck3dData) {
+    state.deck3dData = buildDeck3dData(state.data);
+  }
+  return state.deck3dData;
+}
+
+function buildDeck3dData(data) {
+  const stats = getElevationStats(data);
+  const paths = [];
+
+  for (const segment of data.segments) {
+    const coordinates = segment.g;
+    if (!coordinates || coordinates.length < 2) continue;
+
+    paths.push({
+      path: buildDeck3dPath(segment, stats),
+      color: slopeColorArray(mesh3dSegmentSteepness(segment)),
+    });
+  }
+
+  return paths;
+}
+
+function buildDeck3dPath(segment, stats) {
+  const coordinates = segment.g;
+  const values = new Float64Array(coordinates.length * 3);
+  const nodeA = state.data.nodes[segment.a];
+  const nodeB = state.data.nodes[segment.b];
+  const startZ = Number.isFinite(nodeA?.[2]) ? nodeA[2] : 0;
+  const endZ = Number.isFinite(nodeB?.[2]) ? nodeB[2] : startZ + (segment.dz || 0);
+  const totalLength = Math.max(segment.l || 0, 1);
+  let runningLength = 0;
+
+  for (let i = 0; i < coordinates.length; i += 1) {
+    if (i > 0) {
+      runningLength += approximateLngLatDistance(coordinates[i - 1], coordinates[i]);
+    }
+
+    const ratio = Math.max(0, Math.min(1, runningLength / totalLength));
+    const currentZ = startZ + (endZ - startZ) * ratio;
+    const offset = i * 3;
+
+    values[offset] = coordinates[i][0];
+    values[offset + 1] = coordinates[i][1];
+    values[offset + 2] = Math.max(0, currentZ - stats.min);
+  }
+
+  return values;
+}
+
+function approximateLngLatDistance(a, b) {
+  const lat = ((a[1] + b[1]) / 2) * (Math.PI / 180);
+  const metersPerDegreeLat = 111320;
+  const metersPerDegreeLng = metersPerDegreeLat * Math.cos(lat);
+  return Math.hypot(
+    (b[0] - a[0]) * metersPerDegreeLng,
+    (b[1] - a[1]) * metersPerDegreeLat,
+  );
+}
+
+function mesh3dSegmentSteepness(segment) {
+  if (Number.isFinite(segment.st)) return Math.max(0, segment.st);
+  if (Number.isFinite(segment.gr)) return Math.abs(segment.gr);
+  return 0;
+}
+
+function slopeColorArray(steepness) {
+  const cacheKey = Math.round(Math.max(0, steepness) * 10) / 10;
+  const cached = state.slopeColorCache.get(cacheKey);
+  if (cached) return cached;
+
+  const value = Math.max(0, Math.min(25, cacheKey));
+  let lower = SLOPE_COLOR_STOPS[0];
+  let upper = SLOPE_COLOR_STOPS[SLOPE_COLOR_STOPS.length - 1];
+
+  for (let i = 1; i < SLOPE_COLOR_STOPS.length; i += 1) {
+    if (value <= SLOPE_COLOR_STOPS[i][0]) {
+      lower = SLOPE_COLOR_STOPS[i - 1];
+      upper = SLOPE_COLOR_STOPS[i];
+      break;
+    }
+  }
+
+  const span = Math.max(0.000001, upper[0] - lower[0]);
+  const t = Math.max(0, Math.min(1, (value - lower[0]) / span));
+  const start = hexToRgb(lower[1]);
+  const end = hexToRgb(upper[1]);
+  const color = [
+    Math.round(start[0] + (end[0] - start[0]) * t),
+    Math.round(start[1] + (end[1] - start[1]) * t),
+    Math.round(start[2] + (end[2] - start[2]) * t),
+  ];
+
+  state.slopeColorCache.set(cacheKey, color);
+  return color;
+}
+
+function hexToRgb(hex) {
+  const value = hex.replace("#", "");
+  return [
+    Number.parseInt(value.slice(0, 2), 16),
+    Number.parseInt(value.slice(2, 4), 16),
+    Number.parseInt(value.slice(4, 6), 16),
+  ];
 }
 
 function setRouteVisibility(key, visible) {
@@ -892,7 +1089,7 @@ function wireSlopeHover() {
 }
 
 function handleSlopeMouseMove(event) {
-  if (!state.slopeColorVisible) return;
+  if (state.mesh3dBoost > 0) return;
 
   const segment = findNearestSlopeSegment(event);
   if (!segment) {
