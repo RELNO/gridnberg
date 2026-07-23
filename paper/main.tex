@@ -25,6 +25,7 @@
   giveninits=true,
   maxcitenames=2,
   maxbibnames=99,
+  useprefix=true,
   uniquename=false,
   doi=true,
   url=true,
@@ -62,7 +63,7 @@
 
 \title{Gridnberg: A Topography-Aware\\Pedestrian Routing Dataset for New York City}
 \author{Ariel Noyman\\
-  \small MIT Media Lab, Massachusetts Institute of Technology, Cambridge, MA, USA\\
+  \small Massachusetts Institute of Technology, Cambridge, MA, USA\\
   \small \texttt{noyman@mit.edu}}
 \date{}
 
@@ -74,11 +75,11 @@
       \begin{minipage}{0.78\linewidth}
         \begin{abstract}
           \noindent
-          Cities are rarely flat, yet urban network analysis usually represents streets as planar graphs. This simplification affects route length, effort, and the interpretation of accessibility, particularly where alternative paths differ in grade. This paper introduces \dataset ('q-grid-on-a-mountain'), an open topography-aware pedestrian routing dataset for New York City. The dataset enhances the NYCWalks network with nodes-aligned elevations from the New York City Planimetric Database. For each pedestrian-network node, the model averages supported elevation observations within a \SI{50}{\metre} radius, retains segments with complete vertex support, derives directional up-or-down slopes, and assigns three routing costs: horizontal distance, comfort-oriented slope cost, and accessibility-sensitive slope cost. Of the source netowrk, 99.24\pct of the segments are retained, with a median length of \SI{32.07}{\metre} and a 95th percentile of \SI{218.96}{\metre}. \dataset is intended to support reproducible terrain-aware analysis, transparent scenario comparison, and the development of improved pedestrian-network representations in New York and other cities.
+          Cities are rarely flat, yet urban network analysis usually represents streets as planar graphs. This simplification affects modeled impedance, route choice, and the interpretation of accessibility, particularly where alternative paths differ in grade. This paper introduces \dataset, a public topography-aware pedestrian routing dataset for New York City. The dataset enriches the NYCWalks network with vertex-level elevations derived from the New York City Planimetric Database. For each pedestrian-network geometry vertex, the workflow averages selected elevation observations within a \SI{50}{\meter} radius, retains segments with complete vertex support, and uses direction-specific cumulative ascent and descent to calculate three routing costs: horizontal distance, a comfort-oriented slope score, and an accessibility-sensitive slope score. The release retains \num{313184} of \num{315577} source segments (99.24\pct); retained segments have a median length of \SI{32.07}{\meter} and a 95th percentile of \SI{218.96}{\meter}. \dataset supports reproducible terrain-aware analysis, transparent scenario comparison, and the development of improved pedestrian-network representations in New York and other cities.
         \end{abstract}
         \vspace{0.35em}
 
-        \noindent\textbf{Keywords:} pedestrian networks; topography; accessibility; open data; New York City
+        \noindent\textbf{Keywords:} pedestrian networks; topography; accessibility; public data; New York City
       \end{minipage}
     \end{center}
     \vspace{0.8em}
@@ -89,40 +90,42 @@
 
 
 
-At the city scale, many models begin by flattening the road network. Street segments become two-dimensional edges, route impedance becomes horizontal distance, and measures of centrality or accessibility are calculated on a plane. This abstraction is useful and has enabled reproducible, large-scale comparisons of urban form \citep{boeing2017osmnx,boeing2022street}. Nevertheless, walking unfolds over changes in elevation, and grade influences speed, metabolic effort, perceived difficulty, and route choice \citep{minetti2002energy,guo2013route,kay2012route,meeder2017slope}. Even cities commonly conceived as flat contain hills, ramps, stairs, bridges, depressed roadways, and multi-level pedestrian connections.
+At the city scale, many models begin by flattening the road network. Street segments become two-dimensional edges, route impedance becomes horizontal distance, and measures of centrality or accessibility are calculated on a plane. This abstraction is useful and has enabled reproducible, large-scale comparisons of urban form \citep{boeing2017osmnx,boeing2022street}. Nevertheless, walking unfolds over changes in elevation. Grade affects walking speed and metabolic effort and can alter the relative attractiveness of routes and modes \citep{minetti2002energy,kay2012route,meeder2017slope,campbell2019crowdsourced}. Even cities commonly conceived as flat contain hills, ramps, stairs, bridges, depressed roadways, and multilevel pedestrian connections.
 \\
-Pedestrian analysis makes this omission consequential since a planar sidewalk graph improves spatial fidelity but still treats two links of equal horizontal length as interchangeable even when one climbs sharply~\citep{rhoads2023sidewalk,hosseini2023mapping}. Some navigation services may incorporate elevation internally, but closed routing products do not provide a contestable citywide dataset through which researchers can evaluate elevation assignment, cost function, and resulting routing changes.
+Sidewalk-specific networks improve spatial fidelity relative to road-centerline models \citep{rhoads2023sidewalk,hosseini2023mapping}. Unless enriched with elevation, however, a planar graph still treats links with equal horizontal length as equivalent even when one climbs sharply. Although some navigation services may incorporate elevation, their proprietary data and costs generally cannot be inspected or reproduced by researchers.
 \\
-\dataset addresses this gap by enriching a pedestrian network developed by \citep{sevtsuk2026spatial} with local municipal elevation observations and calculates direction-specific grade measures and costs. \dataset grows from broad scholarship around elevation-aware routing, inclined sidewalk datasets, three-dimensional pedestrian networks, and profile-routing methods~\citep{nourian2015easiest,nourian2015configurbanist,rahaman2017capra,bolten2021routine,sun2021connecting,barthelemy2025surfacic}. \dataset contributes to these precedents by providing an open NYC implementation that connects a highly-detailed and verified pedestrian graph, locally sampled public elevation data, transparent directional cost scenarios, and inspectable derivatives.
-\\
-Figure~\ref{fig:interface} presents the accompanying web interface, which combines a citywide grade layer with distance-only, comfort-oriented, and accessibility-sensitive route comparison.
+\dataset addresses this gap by enriching the pedestrian network developed by \citet{sevtsuk2026spatial} with local municipal elevation observations and by calculating direction-specific grade measures and costs. It builds on scholarship concerning elevation-aware routing, incline-aware sidewalk analysis, three-dimensional pedestrian networks, and profile-routing methods \citep{nourian2015easiest,nourian2015configurbanist,rahaman2017capra,bolten2021routine,sun2021connecting,barthelemy2025surfacic}. \dataset contributes a public New York City implementation that combines a highly detailed, validated pedestrian graph; locally sampled municipal elevation data; transparent directional cost scenarios; and inspectable analytical derivatives.
+
+Figure~\ref{fig:interface} presents a screenshot of the accompanying web interface, which combines a citywide grade layer with distance-only, comfort-oriented, and accessibility-sensitive route comparison.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.96\linewidth]{gridnberg-interface.jpeg}
-  \caption{The \dataset web application combines a citywide grade layer with distance-only, comfort-oriented, and accessibility-sensitive route comparison. This interface overview is illustrative and does not supply the quantitative route cases reported below; the application is not a turn-by-turn navigation service.}
+  \caption{The \dataset web application combines a citywide grade layer with distance-only, comfort-oriented, and accessibility-sensitive route comparison. This interface overview is illustrative and does not supply the quantitative route cases reported below.}
   \label{fig:interface}
 \end{figure}
 
-\section{Related work}
+\section{Literature Review}
 
-\subsection{Open urban and pedestrian networks}
+\subsection{Open Street and Pedestrian Networks}
 
-OpenStreetMap-based tools have made street-network acquisition and analysis reproducible across many cities~\citep{boeing2017osmnx,boeing2022street}. Yet street centerlines are an imperfect proxy for walking because pedestrians occupy sidewalks, crossings, paths, passages, and other surfaces that do not always follow vehicular topology. Reviews of sidewalk networks describe persistent gaps in representation, interoperability, validation, and public availability~\citep{rhoads2023sidewalk}. Recent work has developed methods for mapping pedestrian infrastructure at scale and for representing urban space as surfaces rather than only centerlines~\citep{hosseini2023mapping,barthelemy2025surfacic}. In New York,~\citep{sevtsuk2026spatial} assembled and validated NYCWalks, a detailed pedestrian network supporting citywide foot-traffic estimation. A New York-specific precedent is the Robotability Score~\citep{franchi2025robotability} which derives sidewalk centerlines from Planimetric sidewalk polygons and incorporates a nondirectional local slope proxy from LiDAR data to assess accessibility of robotic systems. \dataset extends these precedents by combining a detailed pedestrian network with municipal elevation records, directional slope measures, and transparent routing costs.
+OpenStreetMap-based tools have made street-network acquisition and analysis reproducible across many cities \citep{boeing2017osmnx,boeing2022street}. Yet street centerlines are an imperfect proxy for walking because pedestrians occupy sidewalks, crossings, paths, passages, and other areas that do not always follow vehicular topology. Reviews of sidewalk networks describe persistent gaps in representation, interoperability, validation, and public availability \citep{rhoads2023sidewalk}. Recent work has developed scalable methods for mapping pedestrian infrastructure \citep{hosseini2023mapping} and extended network analysis to graphs embedded on nonflat surfaces \citep{barthelemy2025surfacic}. In New York, \citet{sevtsuk2026spatial} assembled and validated NYCWalks, a detailed pedestrian network supporting citywide foot-traffic estimation. As another New York-specific precedent, \citet{franchi2025robotability} segment NYC Planimetric sidewalk centerlines and compute an absolute, locally averaged slope-gradient feature from the city's one-foot digital elevation model to assess robot accessibility. \dataset extends these precedents by combining a detailed pedestrian network with municipal elevation records, directional slope measures, and transparent routing costs.
 
-\subsection{Networks beyond the plane}
+\subsection{Elevation-Aware Pedestrian Routing}
 
-Three-dimensional and multi-level pedestrian-network research shows that conventional two-dimensional representations can misstate connectivity where bridges, underground passages, elevated walkways, and vertically separated routes are common. Work in Hong Kong has formalized three-dimensional pedestrian topology and examined access in cities where~\textit{ground} is not a single surface \citep{sun2021connecting,zhang2022walking}. Slope-sensitive movement models extend from Tobler's hiking function and physiological work on the energy cost of inclined walking to route-choice and speed models \citep{tobler1993three,minetti2002energy,goodchild2020beyond,irmischer2018measuring}. Studies have compared distance, time, and metabolic-energy optimization; estimated walking-speed variation from terrain and fitness-tracker data; and shown that hills affect both walking and cycling choices \citep{paez2020comparing,campbell2019crowdsourced,campbell2022predicting,broach2012cycling}. These approaches are often calibrated to time, energy, or observed choice.
-\\
-Profile-routing and `easiest path' literature combines geographic and configurational analysis for walking and cycling for urban-design workflow \citep{nourian2015configurbanist,nourian2015easiest}. CAPRA supports route profiling across mobility needs \citep{rahaman2017capra}; \citep{higgins2021hiking} examines terrain-aware pedestrian routing with Tobler's function. At dataset scale, \citep{bolten2021routine} derive incline-aware sidewalk accessibility measures, and newer inclusive-routing datasets combine detailed road environments with mobility-sensitive costs \citep{hosseini2024inclusive,ng2024beyond}. These studies establish that elevation-aware routing is fundamental for many urban mobility modes, and that the choice of cost function can substantially change route selection when presented.
+Three-dimensional and multilevel pedestrian-network research shows how conventional two-dimensional representations can misstate connectivity where bridges, underground passages, elevated walkways, and vertically separated routes are common. Work in Hong Kong has formalized three-dimensional pedestrian topology and examined access in cities where \textit{ground} is not a single surface \citep{sun2021connecting,zhang2022walking}. Slope-sensitive movement models draw on both Tobler's hiking function and physiological research on the energy cost of inclined walking \citep{tobler1993three,minetti2002energy,goodchild2020beyond,irmischer2018measuring}. Studies have compared distance, time, and metabolic-energy optimization; estimated walking-speed variation from terrain and fitness-tracker data; and shown that hills affect walking and cycling behavior \citep{paez2020comparing,campbell2019crowdsourced,campbell2022predicting,broach2012cycling}. These approaches are often calibrated to time, energy, or observed choice.
 
-\section{Data and methods}
+Profile-routing and ``easiest path'' research combines geographic and configurational analysis for walking and cycling in urban-design workflows \citep{nourian2015configurbanist,nourian2015easiest}. CAPRA supports route profiling across mobility needs \citep{rahaman2017capra}, while \citet{higgins2021hiking} examines terrain-aware pedestrian routing with Tobler's function. At the dataset scale, \citet{bolten2021routine} derive incline-aware sidewalk accessibility measures, and recent work has developed elevation-aware inclusive pedestrian-network data and routing methods \citep{hosseini2024inclusive}. Applied three-dimensional least-effort analysis also demonstrates the implications of terrain for older adults' access to healthy food \citep{ng2024beyond}. Together, these studies show that elevation-aware routing matters across urban mobility contexts and that route selection depends on the chosen cost function.
 
-\subsection{Source data}
+\section{Data}
 
-The workflow combines two public sources with different geometries, coordinate systems, and semantic roles (Table~\ref{tab:sources}). The pedestrian source is the supplemental NYCWalks network created by \citep{sevtsuk2026spatial}. It contains \num{315577} LineString records representing sidewalks, crosswalks, and footpaths. The working copy is in EPSG:6538 with a horizontal datum of NAD83. The source study also provides pedestrian-count estimates, but \dataset adopts only the geometry. Future work could combine the two to seek corelation between foot-traffic and slope-sensitive routing.
-\\
-Elevation comes from the 2022 NYC Planimetric Database \texttt{ELEVATION} class \citep{nyc2022elevation,nyc2022capture}. The full class contains \num{1471855} three-dimensional points in EPSG:2263 with elevations referenced to NAVD88 and recorded in US survey feet. It includes ground, bridge, water, and building-roof observations. Before matching, \dataset selects the \num{387566} roadbed spot and bridge points identified by \texttt{FEATURE\_CODE=3000}, corresponding to \texttt{SUB\_FEATURE\_CODE} values 300000 and 300020. This exclusion removes the building-roof elevations which account for 73.6\pct of the full class, which would contaminate the local mean.
+\subsection{Pedestrian Network Data}
+
+The workflow combines two public sources with different geometries, coordinate reference systems, and semantic roles (Table~\ref{tab:sources}). The pedestrian source is the supplemental NYCWalks network created by \citet{sevtsuk2026spatial}. It contains \num{315577} LineString records representing sidewalks, crosswalks, and footpaths. The working copy is projected in EPSG:6538 (NAD83(2011) / New York Long Island) and uses metres. The source study also provides pedestrian-count estimates, but \dataset uses only the geometry.
+
+\subsection{Elevation Data}
+
+Elevation comes from the 2022 NYC Planimetric Database \texttt{ELEVATION} class \citep{nyc2022elevation,nyc2022capture}. The full class contains \num{1471855} point records whose horizontal coordinates use EPSG:2263 (NAD83 / New York Long Island in US survey feet); elevations are referenced to NAVD88 and are also recorded in US survey feet. The class includes ground, bridge, water, building-roof, and other observations. Before matching, the workflow retains \num{387566} roadbed spot and bridge points identified by \texttt{FEATURE\_CODE=3000} and \texttt{SUB\_FEATURE\_CODE} values 300000 and 300020. Building-roof, water, and other feature classes are excluded to reduce contamination of the local mean.
 
 \begin{table*}[t]
   \centering
@@ -135,26 +138,34 @@ Elevation comes from the 2022 NYC Planimetric Database \texttt{ELEVATION} class 
     \midrule
     NYCWalks pedestrian network              & \num{315577} LineStrings; EPSG:6538                                                                & Supplies sidewalk, crosswalk, and footpath geometry. Foot-traffic estimates are not used.              \\
     NYC Planimetric \texttt{ELEVATION}, 2022 & \num{387566} roadbed spot and bridge points selected from \num{1471855} records; EPSG:2263; NAVD88 & Supplies local height observations. Building-roof and water observations are excluded before matching. \\
-    ADA Chapter 4                            & Walking-surface and ramp grade references                                                          & Motivates the 5\pct and 8.33\pct breakpoints. It is not used to label compliance.                      \\
     \bottomrule
   \end{tabularx}
 \end{table*}
 
-The Planimetric capture rules place spot elevations along roadbeds and interior sidewalk centerlines, commonly at beginnings, midpoints, ends, and intervals no greater than 200 feet \citep{nyc2022capture}. They are therefore relevant local observations, but not continuous sidewalk surveys. In particular, they do not measure cross slope, and pedestrian or bicycle bridges may lack dedicated bridge elevation points.
+The Planimetric capture rules place spot elevations at the beginnings, intermediate points, and ends of roadbed and interior-sidewalk-centerline features, generally at intervals no greater than 200 feet \citep{nyc2022capture}. They are therefore relevant local observations, but they are not continuous sidewalk surveys. In particular, they do not measure cross slope, and pedestrian or bicycle bridges may lack dedicated bridge elevation points.
 
-\subsection{Local elevation assignment}
+\section{Methods}
 
-A regular \SI{25}{\metre} search grid indexes the selected elevation points. For every unique network vertex \(v\) with horizontal coordinate \(x_v\), the assigned elevation is the unweighted mean
+\subsection{Elevation Assignment}
+
+Prior to matching, the workflow multiplies the elevation-point horizontal coordinates and elevation values by the US-survey-foot-to-meter factor. A regular \SI{25}{\meter} search grid then indexes the selected elevation points. For every unique network-geometry vertex \(v\) with horizontal coordinate \(x_v\), the assigned elevation is the unweighted mean
 \begin{equation}
   \begin{aligned}
     z_v & = \frac{1}{|P_v|}\sum_{p\in P_v} z_p,                 \\
-    P_v & = \{p: \lVert x_p-x_v\rVert_2 \leq \SI{50}{\metre}\}.
+    P_v & = \{p: \lVert x_p-x_v\rVert_2 \leq \SI{50}{\meter}\}.
   \end{aligned}
   \label{eq:elevation}
 \end{equation}
-A vertex is supported when \(|P_v|\geq1\). The workflow does not substitute a distant nearest neighbour because such a fallback can yield plausible-looking but locally unrelated heights. A segment is retained only when every one of its geometry vertices is supported. This rule preserves 99.24\pct of the source segments. The \SI{50}{\metre} radius trades spatial specificity for source coverage. Among retained unique vertices, the median number of contributing observations is 6, with a range of 1 to 80. The median nearest contributing point is \SI{10.14}{\metre} away and the 99th percentile is \SI{36.52}{\metre}. These measures reduce but do not eliminate the risk of mixing vertically distinct observations, particularly where bridges, underpasses, and stairs are present. Future work should combine a more nuanced selection, where height points are geographically or topologically filtered.
+A vertex is supported when \(|P_v|\geq1\). The workflow does not substitute a distant nearest neighbor because such a fallback can yield plausible-looking but locally unrelated heights. A segment is retained only when every geometry vertex is supported. This rule preserves 99.24\pct of the source segments. The \SI{50}{\meter} radius trades spatial specificity for source coverage. Across all supported source vertices, the median number of contributing observations is 6, with a range of 1 to 80. As Figure~\ref{fig:support-distance} shows, the median distance to the nearest contributing observation is \SI{10.14}{\meter}; the 90th and 99th percentiles are \SI{19.97}{\meter} and \SI{36.52}{\meter}, respectively. These diagnostics reduce but do not eliminate the risk of mixing vertically distinct observations, particularly near bridges, underpasses, and stairs.
 
-\subsection{Segment measures and graph construction}
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{support_distance_distribution.pdf}
+  \caption{Horizontal proximity of supported source-network geometry vertices to the selected elevation observations. Panel A shows nearest-observation distance in \SI{5}{\meter} bins; Panel B shows the empirical cumulative distribution, with the median (\SI{10.14}{\meter}), 90th percentile (\SI{19.97}{\meter}), and 99th percentile (\SI{36.52}{\meter}) marked. The distribution is conditional on support within \SI{50}{\meter} (\num{781900} of \num{805864} unique source vertices) and describes horizontal proximity, not elevation accuracy or facility-level correspondence.}
+  \label{fig:support-distance}
+\end{figure*}
+
+\subsection{Segment Metrics}
 
 For a retained segment with ordered vertices \((x_i,z_i)\), horizontal length is \(L=\sum_i\lVert x_{i+1}-x_i\rVert_2\). Positive and negative elevation changes are accumulated separately over all geometry steps:
 \begin{equation}
@@ -163,13 +174,20 @@ For a retained segment with ordered vertices \((x_i,z_i)\), horizontal length is
     G^- & = \sum_i \max(z_i-z_{i+1},0).
   \end{aligned}
 \end{equation}
-The public table also reports endpoint net change, endpoint-average grade, and the maximum absolute local grade among geometry steps at least \SI{1}{\metre} long. The one-metre rule prevents extremely short horizontal steps from dominating the reported local maximum. It does not currently remove those steps from \(G^+\), \(G^-\), or routing cost, a distinction revisited in Section~\ref{sec:limitations}.
-\\
-Every retained segment is stored once with arbitrary endpoint identifiers \(a\) and \(b\), then treated as two directed edges for routing. The workflow assumes every retained source segment can be traversed in both directions. Reversing direction exchanges \(G^+\) and \(G^-\) while preserving horizontal length and maximum absolute grade. Directional costs are stored side by side in the public segment table and only segment endpoints become routing nodes.
+These quantities are used internally to calculate directional costs. The public table reports endpoint net change \(\Delta z=z_n-z_1\), endpoint-average grade \(100\Delta z/L\), and the maximum absolute local grade
+\begin{equation}
+  g_{\max}=100\max_{i:\,\ell_i\geq \SI{1}{\meter}}
+  \frac{|z_{i+1}-z_i|}{\ell_i},
+\end{equation}
+where \(\ell_i=\lVert x_{i+1}-x_i\rVert_2\). If no step is at least \SI{1}{\meter} long, the reported maximum is set to zero. The one-meter rule prevents extremely short horizontal steps from dominating this diagnostic field. It does not remove those steps from \(G^+\), \(G^-\), or routing cost, a distinction revisited in Section~\ref{sec:limitations}. Formulas below use grade ratios as decimals; exported grade fields are percentages.
 
-\subsection{Routing profiles}
+\subsection{Network Construction}
 
-The distance-only cost is \(C_0=L\). The other profiles use a transparent piecewise grade penalty. Let \(q^+=G^+/L\) and \(q^-=G^-/L\) be cumulative positive and negative grade ratios in a given direction. For threshold values \(g_0=0.05\) and \(g_1=1/12\), define
+Every retained segment is stored once with endpoint identifiers \(a\) and \(b\), then treated as two directed edges for routing. Endpoint coordinates are keyed by exact horizontal-coordinate equality, and only segment endpoints become routing nodes. The workflow assumes that every retained source segment can be traversed in both directions. Reversing direction exchanges \(G^+\) and \(G^-\) while preserving horizontal length and maximum absolute grade. Directional costs are stored side by side in the public segment table, while parallel segments remain distinct through their segment identifiers.
+
+\subsection{Routing Cost Functions}
+
+The distance-only cost is \(C_0=L\). The other profiles use a transparent piecewise grade penalty. Let \(q^+=G^+/L\) and \(q^-=G^-/L\) be the cumulative ascent and descent ratios in a given direction. For threshold values \(g_0=0.05\) and \(g_1=1/12\), define
 \begin{equation}
   \begin{aligned}
     h(q;w_m,w_s)={} & w_m\min\{\max(q-g_0,0),g_1-g_0\} \\
@@ -185,7 +203,7 @@ The directional score is
   \end{aligned}
   \label{eq:cost}
 \end{equation}
-Table~\ref{tab:profiles} lists the scenario weights. Uphill and downhill use different weights since they impose different efforts. The accessibility-sensitive profile increases both, particularly beyond 8.33\pct. For assessment purposes, the two breakpoints provide recognizable grade references from ADA specifications \citep{usaccessboard2010ada}. Figure~\ref{fig:elevation-slope-view} visualizes the combination of assigned elevation with the penalty-relevant grade layer.
+Table~\ref{tab:profiles} lists the scenario weights. Uphill and downhill use different values to represent asymmetric grade aversion. These dimensionless coefficients are selected scenario parameters rather than empirically calibrated estimates. The accessibility-sensitive profile increases both penalties, particularly above 8.33\pct. The 5\pct and 8.33\pct breakpoints correspond to recognizable values in ADA walking-surface and ramp specifications, respectively, but neither the thresholds nor the profile labels constitute a compliance assessment \citep{usaccessboard2010ada}. Because the costs use segment-aggregate \(G^+/L\) and \(G^-/L\), they do not directly optimize the maximum local grade reported in the released table.
 
 \begin{table*}[t]
   \centering
@@ -205,91 +223,71 @@ Table~\ref{tab:profiles} lists the scenario weights. Uphill and downhill use dif
   \end{tabular}
 \end{table*}
 
+\subsection{Route Computation}
 
+For route comparison, each physical segment is expanded into two in-memory directed edges with the selected directional cost. Dijkstra's algorithm computes a minimum-cost path, with equal-cost ties retaining the first encountered predecessor. Parallel edges are preserved and distinguished by segment identifier. The O-D (origin-destination) pairs presented below were selected as illustrative diagnostic cases and their coordinates are recorded in the accompanying analysis output.
 
-\section{Data records and technical validation}
+\section{Results}
 
-\subsection{Released records}
+\subsection{Dataset Characteristics}
 
-The analytical release contains \num{187657} endpoint nodes and \num{313184} physical segments, equivalent to \num{626368} directed edges. Table~\ref{tab:records} summarizes the principal outputs, including the dataset, a GIS GeoPackage, derivatives for the web application, notebook and Python scripts to reproduce the elevation assignment.
-\\
-The segment-length median is \SI{32.07}{\metre}; the 95th percentile is \SI{218.96}{\metre}. Node elevation ranges from \SI{-0.33}{\metre} to \SI{121.09}{\metre}, with a median of \SI{12.97}{\metre}. Median absolute endpoint-average grade is 0.58\pct and the 95th percentile is 4.74\pct. The maximum local absolute grade has a median of 0.88\pct and a 95th percentile of 10.60\pct. In total, \num{40064} segments (12.79\pct) contain a reported local grade of at least 5\pct, \num{21430} (6.84\pct) reach at least 8.33\pct, and \num{14895} (4.76\pct) receive a slope penalty in at least one direction.
+The analytical release contains \num{187657} endpoint nodes and \num{313184} physical segments, equivalent to \num{626368} directed edges. The segment-length median is \SI{32.07}{\meter}; the 95th percentile is \SI{218.96}{\meter}. Node elevation ranges from \SI{-0.33}{\meter} to \SI{121.09}{\meter}, with a median of \SI{12.97}{\meter}. Median absolute endpoint-average grade is 0.58\pct, and the 95th percentile is 4.74\pct. The maximum local absolute grade has a median of 0.88\pct and a 95th percentile of 10.60\pct. In total, \num{40064} segments (12.79\pct) contain a reported local grade of at least 5\pct, and \num{21430} (6.84\pct) reach at least 8.33\pct. By contrast, \num{14895} segments (4.76\pct) receive a slope penalty in at least one direction. The lower count is not contradictory: the local maximum summarizes individual geometry steps, whereas the cost threshold is applied to segment-aggregate \(G^+/L\) or \(G^-/L\).
 
-\begin{table*}[t]
-  \centering
-  \caption{Principal release products.}
-  \label{tab:records}
-  \small
-  \begin{tabularx}{\linewidth}{@{}p{0.30\linewidth}p{0.18\linewidth}X@{}}
-    \toprule
-    Record                        & Size                & Contents and intended use                                                                         \\
-    \midrule
-    \texttt{routing\_nodes.csv}   & \num{187657} rows   & Node identifier, EPSG:6538 coordinates, and assigned elevation in metres.                         \\
-    \texttt{routing\_network.csv} & \num{313184} rows   & Endpoint identifiers, length, endpoint elevations, grade summaries, and costs in both directions. \\
-    Routing GeoPackage            & 2 layers            & Three-dimensional segment geometry and routing nodes for GIS inspection.                          \\
-    Browser derivatives           & JSON and GeoJSON    & Compact graph, display geometry, and route attributes used by the web application.                \\
-    Workflow and audit scripts    & Notebook and Python & Elevation assignment, exports, descriptive statistics, and illustrative route reconstruction.     \\
-    \bottomrule
-  \end{tabularx}
-\end{table*}
-
+Figure~\ref{fig:elevation-slope-view} illustrates the spatial expression of assigned elevation and maximum reported local grade across a portion of Brooklyn.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.90\linewidth]{gridnberg-elevation-slope-3d.png}
-  \caption{Vertically exaggerated three-dimensional view of the \dataset network looking northbound from Green-Wood Cemetery and Prospect Park. Visible attributes are (i) assigned network elevation; (ii) topographic relief through an accentuated vertical scale; and (iii) penalty-relevant slope severity through the color of each segment's maximum local absolute grade. Purple lies below the 5\pct penalty breakpoint, magenta and pink span the moderate range, and orange to white marks increasingly steep links beyond 8.33\pct. Evidently, parks and open-spaces such as the cemetery have more steep terrain than the surrounding street grid. However, it is apparent how neighborhoods with similar horizontal distance - such as Park Slope and Prospect Lefferts Gardens - can differ in slope exposure.}
+  \caption{Vertically exaggerated three-dimensional view of the \dataset network looking northwest from Green-Wood Cemetery and Prospect Park. The view combines assigned vertex elevation, topographic relief, and a descriptive local-grade layer colored by each segment's maximum reported absolute grade. Purple lies below 5\pct, magenta and pink span 5--8.33\pct, and orange to white marks increasingly steep reported values above 8.33\pct. Steeper reported values occur in parks and other open spaces, whose paths often follow natural terrain. Park Slope (left of center) also shows steeper and more variable reported grades than Crown Heights and Prospect Lefferts Gardens (right of center).}
   \label{fig:elevation-slope-view}
 \end{figure}
 
 
-\subsection{Reconstruction and quality control}
+\subsection{Consistency Checks}
 
-Technical validation was conducted as follows. First, reconstructing the dataset from the archived sources reproduced the released coverage: \num{781900} of \num{805864} unique source vertices had local support, and \num{313184} segments met the complete-support criterion. Second, the local mean elevation was independently recalculated for 63 released nodes using the original spot-elevation and bridge observations. All recalculated values matched the released node table within floating-point rounding. In contrast, calculations using the unfiltered Planimetric class produced substantial errors near buildings, demonstrating the importance of the feature filtering.
-\\
-Distributional review identifies \num{470} segments (0.15\pct) with a reported local absolute grade of +100\pct. At Dyckman Fields, one \SI{0.34}{\metre} segment changes \SI{4.74}{\metre} in elevation: because its horizontal step is below the one-metre reporting threshold, its maximum local grade is reported as zero, while its accumulated gain still produces an extreme cost. Such records may arise from stairs, vertical or multi-level connections, geometry artifacts, or mismatched elevation support. They are retained in this initial research release to make these visible, but they should be flagged or revised before safety-critical routing.
+Repeating the analysis on the archived source data reproduced the released coverage. Including all records in the Planimetric \texttt{ELEVATION} class instead skewed the resulting elevations near buildings, confirming the need to filter elevation feature codes before matching. Review identifies \num{470} segments (0.15\pct) with a \emph{reported} local absolute grade at or above 100\pct. At Dyckman Fields, one \SI{0.34}{\meter} geometry step changes \SI{4.74}{\meter} in elevation. Because no step on that segment passes the one-meter reporting threshold, its maximum local grade is reported as zero, while its accumulated gain still produces an extreme cost. Such records may represent vertical connections, but they may also result from geometry artifacts or mismatched elevation support. The current filtered maximum-grade field therefore does not expose every extreme value that can influence cost, and such cases require explicit review and handling before real-world routing use.
 
-\section{Route comparisons case studies}
+\subsection{Route Comparison Case Studies}
 
-Figure~\ref{fig:routes} compares the three profiles for two O-D (origin-destination) pairs. In St.~George, Staten Island, the distance route is \SI{1.76}{\kilo\metre} with \SI{48}{\metre} of endpoint-derived cumulative gain and a maximum reported local grade of 35.5\pct. The comfort-oriented route is 5.5\pct longer but reduces the corresponding gain to \SI{43}{\metre} and the maximum to 14.2\pct. The accessibility-sensitive route follows nearly the same corridor.
+Figure~\ref{fig:routes} compares the three profiles for two O-D pairs. In Staten Island, the distance-minimizing route is \SI{1.76}{\kilo\meter}. The routing output reports \SI{48.49}{\meter} of endpoint-summed gain and a maximum local grade of 35.5\pct. Recalculation across all intermediate geometry vertices gives \SI{61.48}{\meter} of gain, which, together with full-geometry loss, enters the assigned cost. The comfort-oriented route is 5.5\pct longer but reduces full-geometry gain to \SI{43.30}{\meter} and the maximum reported local grade to 14.2\pct. The accessibility-sensitive route follows nearly the same corridor.
 \\
-The Morningside Heights-Harlem route includes an edge with a reported grade of 209.2\pct, an implausible value for a typical walkway. Both slope-sensitive routing profiles avoid this edge by choosing a route that is 2.3\pct longer, reducing the maximum grade to 10.2\pct. This route selection shows that the algorithm responds correctly to the assigned costs, although the reported grade might be inaccurate. Future work can compare topographic data with object-classified street-level imagery to determine whether steep grades reflect real terrain or a data error.
+The Morningside Heights distance route includes an edge with a reported grade of 209.2\pct, an implausible value for a typical walkway. Both slope-sensitive profiles avoid this edge by choosing a route that is 2.3\pct longer, reducing the maximum reported grade to 10.2\pct. Full-geometry gain falls from \SI{19.59}{\meter} to \SI{7.00}{\meter}. The selected paths therefore minimize the assigned costs as specified, although the underlying elevation-derived grade may be inaccurate.
 \\
-The most informative edge cases are not limited to steep hills. Near Queensboro Bridge and the RFK Bridge on Randall's Island, several extreme records result when ground observations around paths enter the same moving window as road or bridge-deck observations tens of metres higher. Stairs may be geometrically valid but inappropriate for some users; very short features can amplify noise; underpasses and elevated paths can be topologically connected in two dimensions while vertically separate; and a \SI{50}{\metre} mean can smooth a sharp local transition. These cases make \dataset useful as a city-wide diagnostic source, but not as a finished route product.
+Diagnostic inspection suggests that several extreme records on Randall's Island occur when a single moving window combines ground observations around paths with road- or bridge-deck observations tens of meters higher. Stairs may be geometrically valid but unsuitable for some users; very short features can amplify noise; underpasses and elevated paths can be connected in two dimensions while remaining vertically separate; and a \SI{50}{\meter} mean can smooth a sharp local transition. These cases make \dataset useful as a citywide diagnostic resource; they also require further investigation as edge cases.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{route_cases.pdf}
-  \caption{Illustrative route comparisons reconstructed from the released browser graph. Panel A shows a diagnostic case in Morningside Heights-Harlem, where an implausibly steep source-derived edge changes route choice. Panel B shows a more plausible distance-grade trade-off in St.~George-Tompkinsville. Gain is summed from endpoint changes in the current application, while the routing cost uses changes across all intermediate geometry vertices. Maximum grade is the largest released local-grade value along each route.}
+  \caption{Illustrative route comparisons reconstructed from the released graph. Panel A shows a diagnostic case in Morningside Heights/Harlem, where an implausibly steep elevation-assigned edge changes route choice. Panel B shows a more plausible distance-grade trade-off in St.~George/Tompkinsville. Gain labels reproduce the current application's endpoint-summed metric, whereas routing costs use changes across all intermediate geometry vertices.}
   \label{fig:routes}
 \end{figure*}
 
-\section{Limitations and next validation steps}
+\section{Discussion}
+
+\subsection{Limitations}
 \label{sec:limitations}
 
---added here ---
-
-The graph has 256 connected components, its largest contains \num{158110} nodes (84.25\pct) and \num{266698} physical edges, where Staten Island and the Rockaway peninsula form the next two largest. Some additional fragmentation is produced by the complete-support rule. On the Marine Parkway and Cross Bay bridges, five source vertices miss the \SI{50}{\metre} threshold by only 1.27--5.49 m, separating the Rockaways. A coverage-only audit at \SI{55}{\metre} reconnects that component, but also increases the risk of mixing vertically distinct observations. This audit was not used to rebuild the release. The graph also contains two self-loops and \num{4363} endpoint pairs with parallel segments. Parallel links can be valid when distinct pedestrian facilities share endpoints; routing implementations should therefore use a multigraph or retain segment identifiers.
-
-----
-
-\dataset has several limitations. First, the elevation field is a local mean of municipal spot observations rather than a surveyed longitudinal profile of each pedestrian facility. The method can smooth terrain, mix nearby vertical levels, and propagate an erroneous observation.
+Assigned vertex elevations are unweighted local means of municipal spot observations rather than surveyed longitudinal profiles of individual pedestrian facilities. The \SI{50}{\meter} window was selected to address the sparsity of source observations, but it can smooth terrain, combine observations from vertically distinct features, and propagate erroneous source values. The workflow converts the EPSG:2263 horizontal coordinates to meters by unit scaling rather than explicitly transforming them to EPSG:6538; any residual offset between NAD83 and NAD83(2011) has not been quantified.
 \\
-Second, the source graph is assumed to represent walkable connectivity. Elevation enrichment cannot determine whether a link is legally accessible, temporarily obstructed, or correctly connected across stacked infrastructure. It also does not distinguish streets, ramps, stairs, and bridges in the released cost logic.
+The complete-support criterion can fragment the network where elevation coverage is sparse. The released graph has 256 connected components. Its largest contains \num{158110} nodes (84.25\pct) and \num{266698} physical edges; the next two largest correspond to Staten Island and the Rockaway Peninsula, which are geographically separated from the largest component. At the Marine Parkway and Cross Bay bridges, five source vertices have their nearest selected elevation observations 1.27--5.49 meters beyond the \SI{50}{\meter} radius. Supporting all five would require a radius of approximately \SI{55.5}{\meter}, but a larger window would also increase the risk of mixing vertically distinct observations and was not adopted for the release.
 \\
-Third, the routing profiles are heuristic. The terms ``comfort-oriented'' and ``accessibility-sensitive'' do not measured comfort, travel time, energy, universal design, or the needs of a particular pedestrian. The dataset does not measure cross slope, curb ramps, sidewalk width, surface condition, obstacles, lighting, signal timing, construction, or snow.
+The workflow assumes that the source graph represents valid, bidirectional walkable connectivity. Elevation enrichment cannot establish whether a link is legally accessible, temporarily obstructed, or correctly connected across stacked infrastructure. The released cost logic also does not distinguish streets, ramps, stairs, and bridges. The graph contains two self-loops and \num{4363} endpoint pairs joined by parallel segments. Parallel links may represent distinct pedestrian facilities, so routing implementations must use a multigraph or preserve segment identifiers.
 \\
-Fourth, the one-metre safeguard is inconsistent across outputs. It limits the reported maximum local grade, but does not remove short-step elevation changes (such as those from stairs) from gain, loss, or cost. The implausible tail should be addressed through a documented policy that preserves legitimate vertical links while flagging or correcting artifacts.
+The grade-sensitive routing profiles are heuristic and sensitive to the segmentation of source features. Because the penalty is nonlinear, splitting or merging the same physical path can change the resulting cost, and a steep local step can be diluted within a long segment. The dataset also omits cross slope, curb ramps, sidewalk width, surface condition, obstacles, lighting, signal timing, construction, and snow. Finally, the present validation is primarily internal. No systematic comparison with survey-grade sidewalk profiles or field observations has established error rates for assigned elevation or grade.
 
-\section{Future work}
-\dataset offers a simple pairwise navigation, but future research can provide more complex analyses. Researchers can test how terrain changes network centrality or pedestrian catchments; compare the planar and grade-sensitive reach of transit, parks, schools, cooling centers, or public facilities; identify where steep links concentrate route burden; and examine whether alternative network improvements reduce grade exposure. Specifically, studies such as~\citep{sevtsuk2026spatial} can be repeated with the slope-sensitive costs to observe its correlation with foot-traffic estimates and model performance. The outputs can also support sensitivity  studies in which empirically calibrated time, metabolic-energy, wheelchair, cycling, or user-specific functions replace the provided scenarios \citep{paez2020comparing,greenberg2020physical,ng2024beyond}.
+\subsection{Future Research}
+
+Future work should evaluate more selective geographic and topological matching, document sensitivity to the search radius, compare assigned elevations with independent survey or field observations, and use object-classified street-level imagery to help distinguish legitimate vertical facilities from data artifacts.
+\\
+Beyond pairwise route comparison, researchers can test how terrain changes network centrality or pedestrian catchments; compare the planar and grade-sensitive reach of transit, parks, schools, and other public facilities; identify where steep links concentrate route burden; and examine whether network improvements reduce grade exposure. The foot-traffic models of \citet{sevtsuk2026spatial} could be re-estimated with slope-sensitive costs to test whether terrain improves explanatory or predictive performance. Empirically calibrated time and energy functions \citep{paez2020comparing,greenberg2020physical}, wheelchair-sensitive costs \citep{hosseini2024inclusive}, cycling models \citep{nourian2015easiest}, and user-specific least-effort functions \citep{ng2024beyond} could replace the illustrative scenarios.
 
 \section{Conclusion}
 
-\dataset makes terrain an explicit, inspectable part of a citywide pedestrian graph for New York City. It documents how local elevations are assigned, how direction-specific grade costs are constructed, and how route choice changes under three transparent scenarios. The release also exposes unresolved cases where topography, vertical infrastructure, and data artifacts are difficult to distinguish. Its immediate value is therefore twofold: it enables reproducible terrain-aware analysis, and it provides a concrete basis for improving how pedestrian networks represent elevation. The next version should pair the open transformation with stronger outlier handling, radius sensitivity, field validation, and user-calibrated impedance models.
+\dataset makes terrain an explicit, inspectable part of a citywide pedestrian graph for New York City. It documents how local elevations are assigned, how direction-specific grade scores are constructed, and how route choice changes across the three routing profiles. The release also exposes unresolved cases where topography, vertical infrastructure, and data artifacts are hard to distinguish. Its immediate value therefore lies in enabling reproducible terrain-aware analysis and providing a concrete basis for improving how pedestrian networks represent elevation.
 
 \section*{Data and code availability}
 
-The data, code, QGIS project, and web application are available at \url{https://github.com/RELNO/gridnberg}. The public application is deployed at \url{https://arielnoyman.com/gridnberg/}. The two CSV files under \texttt{outputs/} are the authoritative public tables. The source NYCWalks network and NYC Planimetric elevation points remain governed by their respective providers and are cited separately. This initial preprint describes the version distributed through the project repository.
+The data, code, QGIS project, and web application are available at \url{https://github.com/RELNO/gridnberg}. The public application is deployed at \url{https://arielnoyman.com/gridnberg/}. The analytical tables are \path{outputs/nyc_ped_net_radius50m_routing_network.csv} and \path{outputs/nyc_ped_net_radius50m_routing_nodes.csv}; the companion GeoPackage preserves the intermediate segment geometry needed to inspect vertex-dependent metrics. The source NYCWalks network and NYC Planimetric elevation points remain governed by their respective providers and are cited separately.
 
 
 \section*{Acknowledgments}
